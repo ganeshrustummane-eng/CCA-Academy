@@ -1,0 +1,99 @@
+# Prompt/Tool Lab exercises. Learner writes a system prompt plus tool definitions for a
+# scenario, submits for AI review (independent reviewer instance, same pattern as milestones).
+#
+# Rubric entries MUST use block mappings with a folded scalar (`check: >-`), never inline flow
+# mappings. See claude-config/rules/content-yaml.md and the guard test
+# ContentTests.test_lab_rubric_entries_have_exact_keys.
+labs:
+  - id: L1
+    title: Design a Tool Interface
+    xp: 60
+    tasks: ["2.1", "2.2"]
+    brief: >-
+      Write a system prompt and ONE tool definition (JSON schema: name, description,
+      parameters) for an agent that looks up order status in an e-commerce system. A
+      sibling tool that cancels an order already exists, so this tool's name and
+      description must be unambiguous against it. Also say what the agent should do when
+      the tool returns an error or an empty result.
+    rubric:
+      - id: tool-name
+        weight: 20
+        check: >-
+          Tool name is a verb-first, specific action name that cannot be confused with a
+          sibling tool such as a cancel-order tool.
+      - id: description
+        weight: 30
+        check: >-
+          Tool description states purpose, inputs, and boundaries versus similar tools, so
+          a model can pick the right tool without guessing.
+      - id: parameters
+        weight: 30
+        check: >-
+          Parameters are typed, required fields are marked, and enums or formats are used
+          where the input space is constrained.
+      - id: error-handling
+        weight: 20
+        check: >-
+          The system prompt or tool description tells the model what to do when the tool
+          returns an error or an empty result, instead of assuming success.
+
+  - id: L2
+    title: Force Structured Output
+    xp: 60
+    tasks: ["2.3", "4.3"]
+    brief: >-
+      A document-extraction agent must return one structured record per document, every
+      time, with no free text. Write a system prompt, the extraction tool definition, and
+      state the tool_choice setting you would use and why.
+    rubric:
+      - id: tool-choice
+        weight: 30
+        check: >-
+          States a specific tool_choice (forced to the one named tool, not auto or any) and
+          gives the reason every call must return structured output.
+      - id: schema-strictness
+        weight: 30
+        check: >-
+          Tool parameters mark every required field as required and avoid loose types like
+          an untyped string where an enum or number is possible.
+      - id: prompt-scope
+        weight: 20
+        check: >-
+          System prompt tells the model to call the tool exactly once per document and not
+          to narrate or ask clarifying questions.
+      - id: failure-mode
+        weight: 20
+        check: >-
+          Submission addresses what happens when a document does not match the schema
+          (e.g. missing field) rather than assuming every document is clean.
+
+  - id: L3
+    title: Explicit Criteria Prompting
+    xp: 60
+    tasks: ["4.1", "4.2"]
+    brief: >-
+      Write a system prompt that asks the model to review a pull request description for
+      completeness. Replace any vague instruction ("review it carefully") with explicit,
+      checkable criteria, and include at least one few-shot example of a good vs a bad
+      description.
+    rubric:
+      - id: explicit-criteria
+        weight: 40
+        check: >-
+          Instructions are checkable criteria (e.g. a required list of sections or fields)
+          rather than vague adjectives like "thorough" or "careful" with no definition.
+      - id: few-shot
+        weight: 30
+        check: >-
+          Includes at least one concrete example contrasting a good and a bad PR
+          description, not just an abstract rule.
+      - id: scope
+        weight: 15
+        check: >-
+          Prompt states what is out of scope (e.g. code correctness) so the model does not
+          drift into reviewing things this prompt was not asked to review.
+      - id: output-format
+        weight: 15
+        check: >-
+          Prompt specifies the exact output shape expected back (e.g. a short verdict plus
+          a list of missing sections), not just "give feedback".

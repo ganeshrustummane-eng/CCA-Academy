@@ -1,0 +1,390 @@
+# Milestone projects. Learners build these locally, then submit files for AI review (independent reviewer instance).
+#
+# Rubric entries MUST use block mappings with a folded scalar (`check: >-`), never inline flow
+# mappings (`{id: x, check: some, text}`). An unquoted flow scalar terminates at the first comma,
+# so the rest of the sentence silently becomes a key with value None and the reviewer grades
+# against a fragment. See claude-config/rules/content-yaml.md and the guard test
+# ContentTests.test_rubric_entries_have_exact_keys.
+milestones:
+  - id: M1
+    title: The Honest Loop
+    week: 1
+    xp: 120
+    tasks: ["1.1", "2.1", "2.3"]
+    brief: Build a manual agentic loop with three tools (get_customer, lookup_order, process_refund) that terminates only on the finish signal.
+    guide: >-
+      Approach, not a solution: write the loop as while True, call the model with the running
+      message history and tool schemas, then branch on the response's stop reason. On a
+      tool-call signal, run the matching handler, append its result to history as a tool
+      message, and loop again. On the finish signal, break and return the text. Write each
+      tool's description so it says what it does, what it needs, and when to use a sibling
+      tool instead - that is what task 2.1 is testing. Keep a turn counter as a safety net you
+      hope never fires, separate from the real stop condition.
+    steps:
+      - "Read tasks 1.1, 2.1 and 2.3 in Curriculum and practise them until you score 80% or more."
+      - "Create tools.py with a JSON schema and a fake in-memory handler for get_customer, lookup_order and process_refund."
+      - "Give each tool a description that says what it does, which inputs it needs, and when to use a sibling tool instead."
+      - "Create loop.py. Keep a messages list, call the model with messages plus tools, and append the assistant reply every turn."
+      - "Branch on stop_reason. On tool_use run each requested handler and append one tool_result per call; on end_turn break and return the text."
+      - "Add a turn counter (for example 10) that raises as a safety net only, separate from the real stop condition."
+      - "Run one refund conversation and save the transcript showing tool_use turns followed by end_turn."
+    deliverables:
+      - loop.py (or .ts) with the manual loop
+      - tools.py with schemas and handlers
+      - A transcript of one run showing tool_use then end_turn
+    stretch: Add a Break-It variant that checks text content, and show the failure.
+    rubric:
+      - id: stop-signal
+        weight: 30
+        check: >-
+          Loop continues on the tool-call signal and stops on the end signal,
+          with no text parsing or iteration-cap-as-primary-stop.
+      - id: history
+        weight: 25
+        check: >-
+          Assistant message and tool results are appended to history each turn.
+      - id: tools
+        weight: 20
+        check: >-
+          Tool descriptions state purpose, inputs and boundaries versus similar tools.
+      - id: scope
+        weight: 15
+        check: >-
+          Agent has 4-5 role-relevant tools at most.
+      - id: safety-cap
+        weight: 10
+        check: >-
+          Any iteration limit is a safety net only, not the main stop condition.
+  - id: M2
+    title: The Gatekeeper
+    week: 1
+    xp: 150
+    tasks: ["1.4", "1.5", "5.2"]
+    brief: Add a prerequisite gate (no refund before verified ownership) and a pre-call hook that blocks refunds above 500 and escalates with a self-contained handoff.
+    guide: >-
+      Approach, not a solution: the gate is a plain if-check inside the refund handler itself,
+      not a prompt instruction - check a verified-set or similar before doing anything else,
+      and return an error if the check fails. The hook runs at the same point, after the gate:
+      compare the requested amount to the limit before calling the real refund logic, and if
+      it is over, build a handoff object with everything a human needs (who, what, how much,
+      why blocked, suggested action) instead of calling the tool at all. Write a test that
+      calls the handler directly with an unverified customer and asserts no refund happened.
+    steps:
+      - "Read tasks 1.4, 1.5 and 5.2 and practise them."
+      - "Start from your M1 tools and add a verified-customers set that is filled only after an ownership check passes."
+      - "In gate.py, make the refund handler return an error before doing anything else when the customer is not verified."
+      - "In hooks.py, add a pre-call hook that inspects the process_refund input and blocks any amount over 500."
+      - "When the hook blocks, build a handoff object (customer id, summary, root cause, amount, recommended action) instead of calling the tool."
+      - "Route an explicit request for a human straight to escalation, without investigating first."
+      - "Write tests that call the handler directly with an unverified customer and an over-limit amount, and assert no refund was recorded. Save one handoff JSON."
+    deliverables:
+      - gate.py and hooks.py
+      - Tests proving blocked calls never reach the refund handler
+      - A handoff JSON example
+    stretch: PostToolUse hook normalising timestamps and status codes.
+    rubric:
+      - id: gate
+        weight: 30
+        check: >-
+          Gate is enforced in code, not only in the prompt, and blocks downstream
+          tools until verification passes.
+      - id: hook
+        weight: 25
+        check: >-
+          Over-limit refunds are intercepted before execution and redirected to escalation.
+      - id: handoff
+        weight: 25
+        check: >-
+          Handoff has customer ID, summary, root cause, amount and recommended action,
+          and stands alone.
+      - id: escalation
+        weight: 10
+        check: >-
+          Explicit human request escalates immediately without investigation.
+      - id: tests
+        weight: 10
+        check: >-
+          Automated tests exist for the gate and the hook.
+  - id: M3
+    title: Errors That Teach
+    week: 2
+    xp: 120
+    tasks: ["2.2", "5.3"]
+    brief: Make every tool return structured errors with category, retryable flag and message, and distinguish access failures from valid empty results.
+    guide: >-
+      Approach, not a solution: define one error shape with a category (transient, validation,
+      business, permission), an isRetryable flag and a human-readable message, and return it as
+      the tool's result rather than raising. The agent reads isRetryable to decide whether to
+      try again - that logic belongs in the loop, not scattered per tool. The trap this
+      milestone is built on: a search that finds nothing is a successful, empty answer, not an
+      error - only return the error shape when the tool genuinely could not do its job.
+    steps:
+      - "Read tasks 2.2 and 5.3 and practise them."
+      - "In errors.py define one error shape with category, retryable and message, and four categories (for example transient, validation, permission, business)."
+      - "Change every handler to return that shape on failure instead of raising or returning a bare string."
+      - "Make a lookup that finds nothing return a successful empty result, not an error, so the agent does not retry it."
+      - "Add one handler path per category so you can demonstrate all four."
+      - "In the agent logic, retry only when retryable is true (with a small backoff and a limit) and surface everything else to the model."
+      - "Run a scenario per category and note how the agent reacted to each."
+    deliverables:
+      - errors.py with the four categories
+      - Handlers returning each category
+      - Agent logic that retries only transient errors
+    rubric:
+      - id: categories
+        weight: 30
+        check: >-
+          Transient, validation, business and permission errors are distinct with isRetryable.
+      - id: empty
+        weight: 30
+        check: >-
+          Valid empty results are returned as success, not as errors, and not retried.
+      - id: propagate
+        weight: 25
+        check: >-
+          Unrecoverable errors carry attempted query, partial results and alternatives.
+      - id: no-suppress
+        weight: 15
+        check: >-
+          No silent suppression and no whole-workflow abort on one failure.
+  - id: M4
+    title: The Coordinator
+    week: 2
+    xp: 200
+    tasks: ["1.2", "1.3", "1.6", "5.6"]
+    brief: Build a coordinator that decomposes a broad topic, spawns search and analysis subagents in parallel, passes structured claim-source data to a synthesis agent, and annotates coverage gaps.
+    guide: >-
+      Approach, not a solution: the coordinator's only job is to split the topic into
+      non-overlapping subtopics and write a self-contained prompt for each one - subagents
+      share no memory with each other or with the coordinator, so every fact they need must be
+      in the prompt text itself. Fire the subagent calls concurrently, not one after another.
+      Each subagent should return findings as structured records (claim, source url, excerpt,
+      date), never as free prose, so the synthesis step can merge them and flag where two
+      sources disagree. Finish by listing subtopics that came back thin, instead of hiding them.
+    steps:
+      - "Read tasks 1.2, 1.3, 1.6 and 5.6 and practise them."
+      - "Define the findings schema first, with claim, url, document, excerpt and date for every finding."
+      - "Write the coordinator prompt that splits a broad topic into independent sub-questions."
+      - "Write a search subagent and an analysis subagent whose prompts contain every bit of context they need, assuming nothing is shared."
+      - "Spawn the independent subagents in parallel (in one turn, or with concurrent calls) and collect their structured findings."
+      - "Pass the findings to a synthesis agent that keeps source, excerpt and date on each claim and shows both values when sources conflict."
+      - "End the report with a coverage section listing which sub-questions are weakly sourced."
+    deliverables:
+      - coordinator.py and subagent definitions
+      - Structured findings schema (claim, url, document, excerpt, date)
+      - A report that cites sources and notes gaps
+    stretch: Iterative refinement loop that re-delegates for missing subtopics.
+    rubric:
+      - id: decomposition
+        weight: 25
+        check: >-
+          Topic is decomposed across distinct subtopics with minimal overlap.
+      - id: isolation
+        weight: 25
+        check: >-
+          Every subagent prompt contains all context it needs; nothing is assumed shared.
+      - id: provenance
+        weight: 25
+        check: >-
+          Claims carry source, excerpt and date through synthesis; conflicts show both values.
+      - id: parallel
+        weight: 15
+        check: >-
+          Independent subagents are spawned in parallel.
+      - id: gaps
+        weight: 10
+        check: >-
+          Report states which areas are weakly covered.
+  - id: M5
+    title: Configure the Team Workspace
+    week: 3
+    xp: 150
+    tasks: ["3.1", "3.2", "3.3", "2.4", "3.4"]
+    brief: Create a Claude Code workspace with project CLAUDE.md, a directory-level file, path-scoped rules for tests and API files, a context-fork skill, and a .mcp.json using env var expansion.
+    guide: >-
+      Approach, not a solution: this milestone is config, not code. Start from this repo's own
+      CLAUDE.md as a worked example of team-wide conventions, then write your own project
+      CLAUDE.md with only standards everyone must follow, and a nested CLAUDE.md in one
+      subdirectory for rules local to that area. Rules under .claude/rules/*.md should use
+      path globs so a rule about tests only loads when you're touching test files. The skill
+      is for a repeatable, verbose, or risky procedure - give it an allowed-tools list and have
+      it run in a context fork so its noisy output doesn't fill the main conversation. In
+      .mcp.json, every secret is a ${ENV_VAR} placeholder, never a literal value.
+    steps:
+      - "Read tasks 3.1, 3.2, 3.3, 2.4 and 3.4 and practise them."
+      - "Write a project CLAUDE.md containing only team-wide standards. Keep personal preferences out of the repo."
+      - "Add a CLAUDE.md inside one subdirectory for rules that only apply there."
+      - "Create .claude/rules/tests.md and .claude/rules/api.md, each with a paths glob that matches those files anywhere in the codebase."
+      - "Create .claude/skills/<name>/SKILL.md for one repeatable, noisy procedure, with context fork and a minimal allowed-tools list."
+      - "Write .mcp.json with every secret as a ${ENV_VAR} placeholder, then grep the repo to confirm no literal keys."
+      - "Check that step-by-step procedures live in the skill, not in CLAUDE.md."
+    deliverables:
+      - CLAUDE.md, a subdirectory CLAUDE.md, .claude/rules/*.md with paths globs
+      - .claude/skills/<name>/SKILL.md with context fork and allowed-tools
+      - .mcp.json with ${ENV_VAR} placeholders and no secrets
+    rubric:
+      - id: hierarchy
+        weight: 20
+        check: >-
+          Team standards sit at project level; personal preferences are not committed.
+      - id: rules
+        weight: 25
+        check: >-
+          Path-specific rules use globs that span the codebase for tests and API files.
+      - id: skill
+        weight: 25
+        check: >-
+          Skill uses context fork and allowed-tools appropriately for verbose or risky work.
+      - id: mcp
+        weight: 20
+        check: >-
+          .mcp.json uses env var expansion and contains no secrets.
+      - id: scope
+        weight: 10
+        check: >-
+          Task procedures are in skills, not CLAUDE.md.
+  - id: M6
+    title: The Repo Explorer
+    week: 4
+    xp: 150
+    tasks: ["2.5", "5.4", "1.7"]
+    brief: Build or script an exploration workflow that uses Grep then Read incrementally, writes findings to a scratchpad, and can resume from a manifest after a crash.
+    guide: >-
+      Approach, not a solution: never load a whole repo into context up front. Start with Grep
+      for the entry point you actually need, Read only the files that match, and write what you
+      learned into a scratchpad file as you go rather than keeping it only in the conversation.
+      The manifest is a small checkpoint - which files you've already processed and what you
+      found - written after each unit of work, so a crash loses at most the current step. On
+      resume, diff the manifest against the filesystem and only re-read files that changed.
+    steps:
+      - "Read tasks 2.5, 5.4 and 1.7 and practise them."
+      - "Pick a real repo and a question to answer about it, then Grep for the entry point instead of reading everything."
+      - "Read only the files the Grep matched, one at a time, following imports as needed."
+      - "After each file, append the key finding to scratchpad.md so it survives outside the conversation."
+      - "Write manifest.json after each unit of work, listing processed files with a hash or mtime and a one-line note."
+      - "Write the resume procedure. Compare the manifest to the filesystem and re-read only the files that changed, naming them."
+      - "Simulate a crash mid-run, resume, and show it skipped the unchanged files."
+    deliverables:
+      - explore.py (or a documented Claude Code workflow)
+      - scratchpad.md and manifest.json examples
+      - A resume procedure that injects only changed-file notes
+    rubric:
+      - id: incremental
+        weight: 30
+        check: >-
+          Starts with Grep for entry points and reads incrementally, never everything up front.
+      - id: scratchpad
+        weight: 25
+        check: >-
+          Key findings are persisted and re-used for later questions.
+      - id: manifest
+        weight: 25
+        check: >-
+          State export allows recovery without full re-exploration.
+      - id: stale
+        weight: 20
+        check: >-
+          Resumption after edits names specific changed files.
+  - id: M7
+    title: The Trustworthy Reviewer
+    week: 5
+    xp: 180
+    tasks: ["3.6", "4.1", "4.2", "4.6", "3.5"]
+    brief: Create a CI review script using claude -p with JSON schema output, explicit criteria with examples, per-file plus integration passes, an independent reviewer, and incremental review that reports only new issues.
+    guide: >-
+      Approach, not a solution: run claude -p (print mode) so the script gets one reply and
+      exits, and force a JSON schema in the response so your script can parse it instead of
+      scraping prose. The review prompt should state concretely what counts as a real finding
+      versus noise, with 2-4 short before/after code examples - a model told to "flag issues"
+      vaguely will flag everything or nothing. Run one pass per changed file, then a second
+      pass over the diff as a whole for cross-file problems a single file can't reveal. The
+      reviewer must be a fresh instance from the one that wrote the code, and on later runs you
+      feed it the previous findings so it reports only what's new or still unresolved.
+    steps:
+      - "Read tasks 3.6, 4.1, 4.2, 4.6 and 3.5 and practise them."
+      - "Write findings.schema.json with file, line, severity, message and detected_pattern."
+      - "Write the review prompt with explicit report and skip categories, plus 2 to 4 short before/after code examples."
+      - "In review.sh or review.py, run claude -p once per changed file with JSON output against the schema."
+      - "Add a second cross-file pass over the whole diff for issues one file cannot reveal."
+      - "Run the reviewer as a fresh process, never inside the session that wrote the code."
+      - "Feed the previous findings into the next run and report only new or still-unresolved issues."
+    deliverables:
+      - review.sh or review.py using non-interactive mode
+      - Review prompt with explicit report/skip criteria and 2-4 few-shot examples
+      - findings.schema.json including detected_pattern
+    rubric:
+      - id: noninteractive
+        weight: 20
+        check: >-
+          Uses non-interactive print mode with machine-readable output.
+      - id: criteria
+        weight: 25
+        check: >-
+          Prompt defines categories to report and skip with concrete code examples,
+          not vague confidence language.
+      - id: passes
+        weight: 20
+        check: >-
+          Per-file passes plus a separate cross-file pass.
+      - id: independent
+        weight: 20
+        check: >-
+          Review runs in a fresh instance, not the generating session.
+      - id: incremental
+        weight: 15
+        check: >-
+          Prior findings are supplied and only new or unresolved issues are reported.
+  - id: M8
+    title: The Extraction Pipeline
+    week: 6
+    xp: 220
+    tasks: ["4.3", "4.4", "4.5", "5.5", "5.1"]
+    brief: Build an invoice extraction pipeline with forced tool use, nullable fields, validation-retry with error feedback, a Batch API run keyed by custom_id, and field-level confidence routing to human review.
+    guide: >-
+      Approach, not a solution: force tool use so the model must return your schema, not prose
+      you then have to parse. Every field should be nullable - a missing field is "null", not
+      a guess - and ambiguous values get an "unclear"/"other" enum entry with a detail string
+      rather than being forced into a wrong category. Keep a calculated_total you compute
+      yourself next to the stated_total the document claims, so you can catch mismatches. When
+      validation fails, retry by sending the model its own bad output plus the specific error,
+      not just "try again". Batch is for the latency-tolerant bulk run - track each request by
+      its custom_id so a failed one can be found and resubmitted alone. Finish by measuring
+      accuracy per document type and field on a labelled sample, and route the fields that
+      score worst to a human instead of trusting every field equally.
+    steps:
+      - "Read tasks 4.3, 4.4, 4.5, 5.5 and 5.1 and practise them."
+      - "Design the extraction tool schema with every field nullable, unclear and other enum values plus a detail string, and stated_total next to calculated_total."
+      - "Force that tool with tool_choice so the model must return the schema, not prose."
+      - "Validate the output in code. On failure, retry with the document, the failed output and the specific error, and skip the retry when the data is simply absent."
+      - "Submit the bulk run through the Batch API with one custom_id per document, then find failures by custom_id and resubmit only those."
+      - "Hand-label a small sample, measure accuracy per document type and per field, and write it up."
+      - "Route the lowest-accuracy fields to human review and keep key transactional facts verbatim."
+    deliverables:
+      - extract.py with schema (nullable fields, unclear/other enums, calculated vs stated total)
+      - retry loop and batch submission with failure resubmission
+      - Calibration notes on a labelled sample, broken down by document type
+    rubric:
+      - id: schema
+        weight: 25
+        check: >-
+          Schema has nullable fields, unclear and other plus detail, and
+          calculated_total next to stated_total.
+      - id: retry
+        weight: 20
+        check: >-
+          Retry sends document, failed output and the specific error, and skips
+          retries when data is absent.
+      - id: batch
+        weight: 20
+        check: >-
+          Batch is used only for latency-tolerant work; failures are found by
+          custom_id and resubmitted.
+      - id: calibrate
+        weight: 25
+        check: >-
+          Accuracy is reported per document type and field; low-confidence fields
+          route to humans.
+      - id: facts
+        weight: 10
+        check: >-
+          Key transactional facts are preserved verbatim, not summarised.

@@ -1,0 +1,677 @@
+# Original curriculum for CCA Foundations. 5 domains, 30 task statements.
+# Authored from the public exam outline; upstream labs are linked, never copied (ADR-002, ADR-008).
+glossary:
+  - term: "Messages API"
+    means: "The HTTP call you make to Claude: send a list of messages, get the next assistant message back."
+  - term: "Context window"
+    means: "Everything the model can see in one call: system prompt, history, tool results. Anything not in it, the model does not know."
+  - term: "System prompt"
+    means: "Standing instructions sent with every call. It guides behaviour, but it is not a guarantee."
+  - term: "Tool / tool_use"
+    means: "A function you describe to the model. When it wants to use one, it replies with a tool_use block naming the tool and its inputs; your code runs it."
+  - term: "Tool result"
+    means: "What your code sends back after running a tool. It must be added to the history so the model can use it."
+  - term: "stop_reason"
+    means: "Why the model stopped: end_turn (finished), tool_use (wants a tool run), max_tokens (cut off)."
+  - term: "Agentic loop"
+    means: "Call the model, run any tools it asks for, send results back, repeat until stop_reason is end_turn."
+  - term: "tool_choice"
+    means: "Controls tool use: auto (model decides), any (must call some tool), or a named tool (must call that one)."
+  - term: "Structured output"
+    means: "Getting JSON that fits a schema, usually by forcing a tool call whose input schema is that JSON shape."
+  - term: "Few-shot examples"
+    means: "A handful of worked input/output examples in the prompt that show the model what you mean."
+  - term: "Subagent"
+    means: "A separate model instance given one sub-task. It starts with an empty context, so it only knows what you pass it."
+  - term: "Hook"
+    means: "Your code that runs automatically before or after a tool call. Unlike a prompt, it always runs, so it can enforce rules."
+  - term: "MCP"
+    means: "Model Context Protocol: a standard way to plug tools and data sources (GitHub, databases) into Claude via a server."
+  - term: "Claude Code"
+    means: "Anthropic's coding agent for the terminal and IDE. It reads and edits your repo with built-in tools like Read, Edit, Grep and Glob."
+  - term: "CLAUDE.md"
+    means: "A markdown file Claude Code loads automatically with project instructions. It can live at user, project or folder level."
+  - term: "Skill"
+    means: "A packaged procedure (SKILL.md) Claude Code loads only when it is relevant, unlike CLAUDE.md, which is always loaded."
+  - term: "Batch API"
+    means: "Send many requests at once for 50% lower cost; results arrive within 24 hours. For work nobody is waiting on."
+domains:
+  - id: D1
+    title: Agentic Architecture & Orchestration
+    weight: 27
+    tasks:
+      - id: "1.1"
+        title: Agentic loops
+        summary: Loop on stop_reason. Continue while the model asks for tools; stop when it signals end_turn. Append every tool result to history.
+        rules:
+          - "stop_reason == tool_use: run tools, append results, call again."
+          - "stop_reason == end_turn: finished."
+          - Tool results must be appended so the model can reason on them.
+        traps:
+          - Parsing assistant text such as "I'm done" to end the loop.
+          - An iteration cap as the primary stop condition.
+          - Treating "response contains text" as completion (text can sit beside tool_use).
+        lab: "Lab 01"
+        example:
+          why: "stop_reason is the model telling you what it wants next. Text can sit beside a tool call, so reading the text to decide \"done\" ends the loop too early."
+          code: |
+            while True:
+                resp = client.messages.create(model=MODEL, max_tokens=1024, tools=tools, messages=messages)
+                messages.append({"role": "assistant", "content": resp.content})
+                if resp.stop_reason != "tool_use":        # end_turn: the model is finished
+                    break
+                results = [run_tool(b) for b in resp.content if b.type == "tool_use"]
+                messages.append({"role": "user", "content": results})   # model must see results
+
+            # TRAP: if "done" in resp.content[0].text: break
+      - id: "1.2"
+        title: Multi-agent orchestration
+        summary: Hub-and-spoke. The coordinator decomposes, delegates, aggregates and handles errors. Subagents never talk to each other.
+        rules:
+          - Subagents have isolated context; pass everything in the prompt.
+          - Partition scope to avoid duplicate work; iterate on gaps.
+          - Trace report gaps back to the coordinator's decomposition first.
+        traps:
+          - Assuming subagents inherit the coordinator's history.
+          - Blaming downstream agents for a narrow decomposition.
+        lab: "Lab 03"
+        example:
+          why: "The coordinator owns the plan. If the report is narrow, look at how the work was split before blaming the agents that did their part correctly."
+          code: |
+            topics = coordinator.decompose(question)     # check breadth HERE first
+            findings = [run_subagent(f"Research: {t}. Return claims with sources.") for t in topics]
+            gaps = coordinator.find_gaps(question, findings)
+            if gaps:
+                findings += [run_subagent(f"Research: {g}") for g in gaps]
+            report = coordinator.synthesise(findings)
+
+            # TRAP: subagent B reads subagent A's output directly (spokes never talk)
+      - id: "1.3"
+        title: Subagent invocation and context passing
+        summary: The Task tool spawns subagents (it must be in allowedTools). Pass full findings plus structured metadata (source, page, date).
+        rules:
+          - Several Task calls in one response run in parallel.
+          - Give goals and quality criteria, not step-by-step procedures.
+          - fork_session branches from a shared baseline for divergent approaches.
+        traps:
+          - Dropping source metadata between agents, which loses attribution.
+          - Spawning sequentially across turns when work is independent.
+        lab: "Lab 03"
+        example:
+          why: "A subagent starts with an empty context. Everything it needs, including the source metadata, goes in its prompt. Independent Task calls in one response run in parallel."
+          code: |
+            # One assistant turn, two Task calls -> they run in parallel
+            Task(prompt="""Goal: confirm or refute each revenue claim for ACME 2024.
+            Claims: [claim, source URL, page, date] x 3   <- keep the metadata
+            Done when: every claim is marked confirmed/refuted with a source.""")
+            Task(prompt="Goal: list ACME's 2024 acquisitions with dates and sources.")
+
+            # TRAP: Task(prompt="Continue the research we discussed")   # it has no history
+      - id: "1.4"
+        title: Workflow enforcement and handoff
+        summary: Money, security and compliance need programmatic gates, not prompt reminders. Handoffs must be self-contained.
+        rules:
+          - Prerequisite gates block downstream tools until the prerequisite passes.
+          - "Handoff includes customer ID, summary, root cause, amount, recommended action."
+          - Humans do not see the transcript.
+        traps:
+          - Choosing system-prompt wording or few-shot examples for a high-stakes rule.
+          - Adding a routing classifier for an ordering problem.
+        lab: "Lab 01"
+        example:
+          why: "A prompt only makes the rule likely. A check in code makes it certain. Anything involving money, security or compliance belongs in code."
+          code: |
+            def issue_refund(order_id: str, amount: float, session) -> dict:
+                if not session.identity_verified:                 # programmatic prerequisite gate
+                    return {"isError": True, "message": "Verify the customer's identity first."}
+                return billing.refund(order_id, amount)
+
+            # Handoff to a human must stand alone (they never see the transcript):
+            # customer_id, summary, root cause, amount, recommended action
+
+            # TRAP: system prompt "Always verify identity before refunds."
+      - id: "1.5"
+        title: Agent SDK hooks
+        summary: PostToolUse hooks normalise tool output before the model sees it. Pre-call hooks block or redirect actions such as refunds over a limit.
+        rules:
+          - Hooks give deterministic guarantees; prompts give probabilistic guidance.
+          - Use hooks when one failure costs money or creates legal risk.
+        traps:
+          - Using prompt instructions for compliance checks.
+        lab: "Lab 01"
+        example:
+          why: "A hook is code that runs on every tool call, so it is deterministic. PreToolUse can block a call before it happens; PostToolUse can clean results before the model reads them."
+          code: |
+            async def cap_refunds(input_data, tool_use_id, context):
+                if input_data["tool_input"].get("amount", 0) > 500:
+                    return {"hookSpecificOutput": {
+                        "hookEventName": "PreToolUse",
+                        "permissionDecision": "deny",
+                        "permissionDecisionReason": "Refunds over $500 need a human."}}
+                return {}
+
+            options = ClaudeAgentOptions(hooks={"PreToolUse": [
+                HookMatcher(matcher="mcp__billing__issue_refund", hooks=[cap_refunds])]})
+
+            # TRAP: "Never refund more than $500" in the system prompt
+      - id: "1.6"
+        title: Task decomposition strategies
+        summary: Fixed pipelines suit predictable work; adaptive decomposition suits open-ended investigation. Split big reviews per file plus a cross-file pass.
+        rules:
+          - Per-file passes give consistent depth.
+          - A separate integration pass catches cross-file data flow.
+        traps:
+          - One giant pass over 14 files (attention dilution, inconsistent findings).
+        lab: "Lab 03 / Lab 05"
+        example:
+          why: "Each file gets the same depth when reviewed alone. A separate pass looks only at what flows between files, which per-file passes cannot see."
+          code: |
+            per_file = [review(f, focus="bugs inside this file") for f in changed_files]
+            cross    = review(changed_files, focus="data flow and contracts BETWEEN files")
+            report   = merge(per_file, cross)
+
+            # Predictable job -> fixed pipeline like this one.
+            # Open-ended investigation -> let the coordinator decide the next step.
+
+            # TRAP: review(all_14_files, focus="everything")   # attention dilutes
+      - id: "1.7"
+        title: Session state and resumption
+        summary: Resume when context is still valid, fork to explore branches, start fresh with an injected summary when tool results are stale.
+        rules:
+          - After edits, tell the agent which files changed for targeted re-analysis.
+          - Fresh start plus summary beats resuming on stale tool results.
+        traps:
+          - Resuming blindly after files changed.
+        lab: "Lab 02"
+        example:
+          why: "Old tool results describe files as they were. Once files change, resuming trusts stale facts. A fresh start with a short summary is safer."
+          code: |
+            # Nothing changed since yesterday -> resume
+            claude --resume
+
+            # Files changed -> fresh session, inject a summary and say what changed
+            claude -p "Earlier analysis: <summary>. Changed since: auth.py, db.py. Re-check only those."
+
+            # Try an alternative without losing the original
+            claude --resume <session-id> --fork-session
+
+            # TRAP: resume and rely on old Read output after edits
+  - id: D2
+    title: Tool Design & MCP Integration
+    weight: 18
+    tasks:
+      - id: "2.1"
+        title: Tool interface design
+        summary: Descriptions are the primary selection mechanism. State purpose, inputs, examples, edge cases and when to use this tool versus similar ones.
+        rules:
+          - Fix misrouting with better descriptions first.
+          - Split generic tools into purpose-specific ones.
+          - Re-check system prompts for keyword conflicts after changing descriptions.
+        traps:
+          - Few-shot examples, a classifier or consolidation as the first fix.
+        lab: "Lab 01 / Lab 03"
+        example:
+          why: "The model picks tools by reading their descriptions. When it picks the wrong one, fix the description first: say what the tool is for, give an example input, and say when to use a different tool."
+          code: |
+            {
+              "name": "lookup_order",
+              "description": "Get ONE order by order ID (e.g. ORD-12345): status, items, totals. Use for order questions only. For name, email or address use get_customer instead. Shipping fields are null until the order ships.",
+              "input_schema": {"type": "object",
+                               "properties": {"order_id": {"type": "string"}},
+                               "required": ["order_id"]}
+            }
+
+            # TRAP: "description": "Looks up info"  ...then adding a routing classifier
+      - id: "2.2"
+        title: Structured error responses
+        summary: Return isError with category (transient, validation, business, permission), retryability and a readable message.
+        rules:
+          - Access failure may be retried; a valid empty result is the answer.
+          - Business errors are not retryable.
+          - Subagents recover locally and propagate only what they cannot fix, with partial results.
+        traps:
+          - Retrying an empty result, then escalating.
+        lab: "Lab 01 / Lab 03"
+        example:
+          why: "The category tells the agent what to do next: retry, fix the input, explain the policy, or ask for access. A valid empty result is an answer, not an error."
+          code: |
+            return {"isError": True, "content": [{"type": "text", "text": json.dumps({
+                "category": "transient",     # transient | validation | business | permission
+                "retryable": True,
+                "message": "Inventory service timed out after 5s."})}]}
+
+            # Empty is a real answer, not an error:
+            return {"content": [{"type": "text", "text": '{"orders": []}'}]}
+
+            # TRAP: bare "Error" -> the agent retries a refund the policy forbids
+      - id: "2.3"
+        title: Tool distribution and tool_choice
+        summary: Keep 4-5 role-scoped tools per agent. auto may return text; any must call some tool; a forced tool must be called.
+        rules:
+          - Give a synthesis agent a scoped verify_fact tool for simple lookups.
+          - Replace generic fetch tools with constrained ones.
+        traps:
+          - Giving one agent 18 tools.
+        lab: "Lab 01 / Lab 03"
+        example:
+          why: "Fewer, role-scoped tools mean fewer wrong picks. tool_choice controls whether the model may answer in text, must call some tool, or must call one specific tool."
+          code: |
+            tool_choice = {"type": "auto"}                      # may reply in plain text
+            tool_choice = {"type": "any"}                       # must call some tool
+            tool_choice = {"type": "tool", "name": "extract"}   # must call this one
+
+            synthesis_tools = [verify_fact, write_section]      # 4-5 scoped tools per role
+
+            # TRAP: one agent holding all 18 tools, including a generic fetch_url
+      - id: "2.4"
+        title: MCP server integration
+        summary: Project .mcp.json is shared and versioned; user config is personal. Use ${ENV_VAR} expansion for secrets. Prefer community servers.
+        rules:
+          - Expose catalogs as MCP resources to avoid exploratory calls.
+          - Build custom servers only for team-specific workflows.
+        traps:
+          - Committing tokens; building what a community server already does.
+        lab: "Lab 02 / Lab 04"
+        example:
+          why: "The project .mcp.json is committed so the whole team gets the same servers. Secrets stay out of git through ${VAR} expansion, and each person sets the variable locally."
+          code: |
+            // .mcp.json  (committed to the repo)
+            {
+              "mcpServers": {
+                "github": {
+                  "command": "npx",
+                  "args": ["-y", "@modelcontextprotocol/server-github"],
+                  "env": {"GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"}
+                }
+              }
+            }
+
+            // TRAP: pasting the real token here, or writing your own GitHub server
+      - id: "2.5"
+        title: Built-in tools
+        summary: Grep searches contents, Glob matches paths. Edit needs unique anchors; fall back to Read plus Write.
+        rules:
+          - Grep for entry points, then Read to follow imports.
+          - Never read the whole codebase up front.
+        traps:
+          - Using Glob to find callers, or reading everything first.
+        lab: "Lab 04"
+        example:
+          why: "Grep searches inside files, Glob matches file paths. Start narrow and follow imports instead of reading everything up front."
+          code: |
+            Grep  "def process_payment"     -> definition and every caller (searches contents)
+            Glob  "src/**/*.test.ts"        -> files whose PATH matches
+            Read  src/billing/payment.py    -> then follow its imports
+
+            Edit  old_string must be unique in the file; if it is not, Read + Write
+
+            # TRAP: Glob to find who calls a function; Read the whole repo first
+  - id: D3
+    title: Claude Code Configuration & Workflows
+    weight: 20
+    tasks:
+      - id: "3.1"
+        title: CLAUDE.md hierarchy
+        summary: User-level is personal; project-level is shared via git; directory-level applies in that folder. Use @import and .claude/rules/ for modularity.
+        rules:
+          - A teammate missing instructions usually means they live in user-level config.
+          - /memory shows which files are loaded.
+        traps:
+          - Putting team standards in ~/.claude/CLAUDE.md.
+        lab: "Lab 02"
+        example:
+          why: "Who should get the instruction decides where it goes. If a teammate is missing a rule that works for you, it is probably in your personal file."
+          code: |
+            ~/.claude/CLAUDE.md         personal, only you     (your own habits)
+            ./CLAUDE.md                 team, in git           (test command, code style)
+            ./packages/api/CLAUDE.md    only inside that folder
+
+            # ./CLAUDE.md can stay short by importing:
+            @docs/testing-standards.md
+
+            # Run /memory to see which files are loaded.
+            # TRAP: team standards in ~/.claude/CLAUDE.md -> "works on my machine"
+      - id: "3.2"
+        title: Custom slash commands and skills
+        summary: .claude/commands and .claude/skills are project-scoped; ~/.claude/ versions are personal. Skill frontmatter offers context fork, allowed-tools and argument-hint.
+        rules:
+          - Skills are on-demand; CLAUDE.md is always-on.
+          - context fork keeps verbose output out of the main conversation.
+        traps:
+          - Task procedures in CLAUDE.md; universal standards in skills.
+        lab: "Lab 02 / Lab 04"
+        example:
+          why: "CLAUDE.md is loaded in every session. A skill loads only when it is needed, so put procedures in skills and keep CLAUDE.md for rules that always apply."
+          code: |
+            # .claude/skills/release-notes/SKILL.md   (project scope, shared via git)
+            ---
+            name: release-notes
+            description: Draft release notes from PRs merged since the last tag
+            context: fork                       # keep the long git output out of the main chat
+            allowed-tools: Bash(git log:*), Read
+            argument-hint: [version]
+            ---
+            1. List merged PRs since the last tag.  2. Group by feature/fix.  3. Write notes.
+
+            # TRAP: this procedure pasted into CLAUDE.md, loaded on every session
+      - id: "3.3"
+        title: Path-specific rules
+        summary: .claude/rules files with a paths glob load only when matching files are edited.
+        rules:
+          - "A glob like **/*.test.tsx covers files scattered across directories."
+          - Scoped loading saves tokens.
+        traps:
+          - A CLAUDE.md in every directory for a cross-cutting convention.
+        lab: "Lab 02"
+        example:
+          why: "A rule with a paths glob loads only when Claude works on a matching file. That suits conventions for files spread across many folders."
+          code: |
+            # .claude/rules/testing.md
+            ---
+            paths:
+              - "**/*.test.tsx"
+            ---
+            Use React Testing Library. Query by role, not by test id.
+
+            # Loads only when a *.test.tsx file is touched, wherever it lives.
+            # TRAP: a CLAUDE.md copied into every component folder
+      - id: "3.4"
+        title: Plan mode vs direct execution
+        summary: Plan mode for large, multi-file or architectural work; direct execution for clear, small changes. Explore subagents isolate discovery noise.
+        rules:
+          - Plan to design, then execute directly.
+        traps:
+          - Planning a one-line null check; executing a 45-file migration blind.
+        lab: "Lab 02 / Lab 04 / Lab 05"
+        example:
+          why: "Plan mode is for work where a wrong approach is costly. Small, clear fixes go faster as direct edits."
+          code: |
+            "Add a null check in parse_date()"            -> just do it
+            "Rename one prop in Button.tsx"               -> just do it
+            "Move 45 files from the REST client to GraphQL"
+                -> plan mode (Shift+Tab), agree the plan, then execute
+                -> an Explore subagent maps usages so the main context stays clean
+
+            # TRAP: planning a one-liner; running the migration without a plan
+      - id: "3.5"
+        title: Iterative refinement
+        summary: Concrete input/output examples beat prose. Use tests to guide iteration and the interview pattern in unfamiliar domains.
+        rules:
+          - Batch feedback when fixes interact; sequence it when independent.
+        traps:
+          - Rewording prose again instead of showing examples.
+        lab: "Lab 02 / Lab 05"
+        example:
+          why: "Examples and tests pin down what you want. Rewording the request in prose leaves the same ambiguity."
+          code: |
+            Instead of:  "Format the dates properly and be consistent."
+
+            Write:       "3/4/24"   -> "2024-03-04"
+                         "March 4"  -> "2026-03-04"   (assume the current year)
+                         "4 Mar"    -> "2026-03-04"
+                         Then: make tests/test_dates.py pass.
+
+            # Unfamiliar domain? Ask Claude to interview you first.
+            # TRAP: rewording the prose request a third time
+      - id: "3.6"
+        title: CI/CD integration
+        summary: Run claude -p for non-interactive CI. Use JSON output with a schema for machine-readable findings. Review with an independent instance.
+        rules:
+          - Feed prior findings back and ask for only new issues.
+          - Document test standards in CLAUDE.md.
+        traps:
+          - A CI job that hangs waiting for input; same-session self-review.
+        lab: "Lab 05"
+        example:
+          why: "-p runs once with no prompts, so CI never hangs. JSON output can be parsed by the pipeline. A separate instance does the review, not the session that wrote the code."
+          code: |
+            git diff origin/main... | claude -p \
+              "Review this diff. Return JSON matching findings.schema.json.
+               Report only issues NOT already in prior-findings.json." \
+              --output-format json > findings.json
+
+            # -p = print mode: non-interactive, exits when done
+            # Test standards live in CLAUDE.md so every run applies them
+
+            # TRAP: plain `claude` in CI (waits for input forever)
+  - id: D4
+    title: Prompt Engineering & Structured Output
+    weight: 20
+    tasks:
+      - id: "4.1"
+        title: Explicit criteria
+        summary: Define exactly what to report and skip, with code examples per severity. Vague instructions like "be conservative" do not help.
+        rules:
+          - Disable a noisy category while you fix it; false positives destroy trust in all categories.
+        traps:
+          - Confidence thresholds as a fix for false positives.
+        lab: "Lab 05"
+        example:
+          why: "Words like \"conservative\" mean something different to everyone. Spell out what to report, what to skip, and give an example for each severity."
+          code: |
+            Report:
+              high   SQL built from user input     cursor.execute("... id=" + uid)
+              high   secret in source              API_KEY = "sk-live-..."
+              medium unchecked None from a lookup
+            Skip:   naming style, missing docstrings, TODO comments
+
+            # Too many false positives in one category? Turn it off while you fix it.
+            # TRAP: "Be conservative and only report important issues."
+      - id: "4.2"
+        title: Few-shot prompting
+        summary: Two to four targeted examples of ambiguous cases, each with the reasoning for the chosen action.
+        rules:
+          - Cover varied document structures to cut empty-field extractions.
+        traps:
+          - Adding more instructions when the problem is inconsistent judgment.
+        lab: "Lab 05 / Lab 06"
+        example:
+          why: "A few examples of the hard cases, each with its reasoning, teach a judgement call better than another page of rules."
+          code: |
+            <example> "Total due: see attached"           -> total: null    (no number in this document)
+            <example> "Subtotal 90 ... Total 99"           -> total: 99      (the final payable amount)
+            <example> total only in the footer table       -> total: 412.50  (tables count too)
+
+            # 2-4 examples, each a different ambiguous layout, each with the reason.
+            # TRAP: adding a fifth paragraph of instructions instead
+      - id: "4.3"
+        title: Structured output with tool_use
+        summary: tool_use with a JSON schema removes syntax errors but not semantic ones. Use nullable fields, an unclear enum and other plus detail.
+        rules:
+          - Nullable or optional fields prevent fabricated values.
+          - Forced tool_choice for mandatory first steps; any for unknown document types.
+        traps:
+          - Assuming a schema guarantees correct values.
+        lab: "Lab 06"
+        example:
+          why: "A schema guarantees valid JSON, not correct values. Let fields be null, and add \"unclear\" and \"other\" options, so the model is never forced to invent an answer."
+          code: |
+            "vendor_name":     {"type": ["string", "null"]},
+            "category":        {"type": "string",
+                                "enum": ["travel", "software", "office", "unclear", "other"]},
+            "category_detail": {"type": "string", "description": "Fill only when category is other"}
+
+            # tool_choice forced to the extraction tool when it must run first
+            # TRAP: vendor_name required and non-null -> the model makes one up
+      - id: "4.4"
+        title: Validation-retry loops
+        summary: Retry with the document, the failed output and the specific validation error. It fixes format problems, not missing source data.
+        rules:
+          - Extract calculated_total beside stated_total to flag discrepancies.
+          - Add detected_pattern to study dismissed findings.
+        traps:
+          - Retrying when the information is absent from the source.
+        lab: "Lab 06"
+        example:
+          why: "Sending the specific error back lets the model fix a format mistake. If the data is not in the document, no number of retries will produce it."
+          code: |
+            feedback = ""
+            for attempt in range(2):
+                out = extract(doc, feedback)
+                err = validate(out)              # e.g. "date '31/02/2024' is not a real date"
+                if not err:
+                    break
+                feedback = f"Previous output: {out}\nError: {err}\nFix only this, using the document."
+
+            # Keep stated_total AND calculated_total to flag mismatches
+            # TRAP: retrying because a field is missing from the source; return null instead
+      - id: "4.5"
+        title: Batch processing
+        summary: Batch API gives 50% savings, up to 24h, no latency SLA, no multi-turn tool calling, correlation by custom_id.
+        rules:
+          - Synchronous for blocking work; batch for overnight and weekly jobs.
+          - Resubmit only failures; tune prompts on a sample first.
+        traps:
+          - Moving pre-merge checks to batch.
+        lab: "Lab 06"
+        example:
+          why: "Batch costs half as much but can take up to 24 hours. Use it only when nobody is waiting on the result."
+          code: |
+            client.messages.batches.create(requests=[
+                {"custom_id": f"invoice-{i}",
+                 "params": {"model": MODEL, "max_tokens": 1024,
+                            "messages": [{"role": "user", "content": doc}]}}
+                for i, doc in enumerate(docs)])
+
+            # Match results by custom_id; resubmit only the failed ones.
+            # Good: nightly backlog, weekly report.
+            # TRAP: a pre-merge check a developer is waiting on
+      - id: "4.6"
+        title: Multi-instance review
+        summary: An independent instance catches more than self-review. Combine per-file passes with an integration pass; route low-confidence findings to humans.
+        rules:
+          - Calibrate confidence thresholds on labelled data.
+        traps:
+          - Asking the generating session to review itself.
+        lab: "Lab 05"
+        example:
+          why: "The session that wrote the code shares its own blind spots. A fresh instance with no history reviews it more honestly."
+          code: |
+            code   = writer.run("Implement the CSV importer")
+            review = fresh_session().run(f"Review this code. You did not write it.\n{code}")
+            for f in review.findings:
+                queue = human_queue if f.confidence < THRESHOLD else auto_fix   # threshold set on labelled data
+
+            # Big change: per-file passes + one cross-file integration pass
+            # TRAP: same session, "Now review what you just wrote"
+  - id: D5
+    title: Context Management & Reliability
+    weight: 15
+    tasks:
+      - id: "5.1"
+        title: Context preservation
+        summary: Keep a persistent case-facts block (amounts, dates, IDs) that is never summarised. Trim tool results. Put key findings first.
+        rules:
+          - Include the full conversation history on each request.
+          - Models lose details in the middle of long inputs.
+        traps:
+          - Progressive summarisation that turns $247.83 into "a recent order".
+        lab: "Lab 01 / Lab 03"
+        example:
+          why: "Summaries lose exact figures. Keep the facts the case depends on in a block that is repeated word for word every turn."
+          code: |
+            <case_facts>                     (repeated verbatim every turn, never summarised)
+            customer_id: C-88123   order: ORD-5521   amount: $247.83   ordered: 2026-09-14
+            </case_facts>
+
+            Older chat turns may be summarised. This block may not.
+            Trim tool results to the fields you need; put key findings at the top.
+
+            # TRAP: the summary now says "customer wants a refund for a recent order"
+      - id: "5.2"
+        title: Escalation and ambiguity resolution
+        summary: Escalate when the customer asks for a human, on policy gaps, or when progress stalls. Do not use sentiment or self-reported confidence.
+        rules:
+          - Explicit request for a human is honoured immediately.
+          - Ask for identifiers when several customers match.
+        traps:
+          - Sentiment score triggers; guessing the most recent customer.
+        lab: "Lab 01"
+        example:
+          why: "Escalate on clear triggers: the customer asks for a person, the policy doesn't cover the request, or there is no progress. Mood and the model's own confidence are not reliable triggers."
+          code: |
+            if asked_for_human(msg):
+                return escalate("Customer asked for a human")          # immediately, no persuading
+            if not policy.covers(request):
+                return escalate(f"Policy gap: {request.kind}")
+            if len(matching_customers) > 1:
+                return ask("Which email or order number is this about?")
+
+            # TRAP: if sentiment < -0.6: escalate()   /   "I'm 90% sure" as a trigger
+      - id: "5.3"
+        title: Error propagation
+        summary: Propagate structured context (type, attempted query, partial results, alternatives). Annotate coverage gaps.
+        rules:
+          - Distinguish access failure from a valid empty result.
+        traps:
+          - Silent suppression; killing the whole workflow on one failure.
+        lab: "Lab 03"
+        example:
+          why: "Pass along what failed, what was tried and what partial results exist. Then the coordinator can work around the gap instead of guessing or giving up."
+          code: |
+            {
+              "status": "partial",
+              "error_type": "timeout",
+              "attempted": "search('EU AI Act fines 2025')",
+              "partial_results": ["2024 fines table"],
+              "alternatives": ["official journal search"],
+              "coverage_gap": "No data for 2025"
+            }
+
+            # TRAP: return [] silently, or abort the whole report on one failed source
+      - id: "5.4"
+        title: Codebase exploration
+        summary: Long sessions drift toward generic patterns. Use scratchpad files, subagents, summary injection and /compact.
+        rules:
+          - Export manifests so a crashed run can resume.
+        traps:
+          - Keeping everything in one noisy context.
+        lab: "Lab 04"
+        example:
+          why: "Long, noisy sessions drift toward generic answers. Have subagents explore, write what they find to files, and keep the main context lean."
+          code: |
+            1. Explore subagent: "Map the auth flow. Write findings to notes/auth.md."
+            2. Main session reads notes/auth.md, not the raw search output.
+            3. /compact when the context grows; notes/ stays the source of truth.
+            4. Long job? Write a manifest (done/remaining) so a crash can resume.
+
+            # TRAP: one 3-hour session full of grep output
+      - id: "5.5"
+        title: Human review and confidence calibration
+        summary: Aggregate accuracy hides weak segments. Validate by document type and field, sample high-confidence output, calibrate per-field confidence.
+        rules:
+          - Route lowest-confidence fields to limited reviewer capacity.
+        traps:
+          - Trusting a 97% overall number.
+        lab: "Lab 06"
+        example:
+          why: "A high overall accuracy can hide one field or document type that fails often. Break the score down, and send the weakest parts to human reviewers first."
+          code: |
+            Overall accuracy: 97%          <- hides this:
+              printed receipt / total      99%
+              handwritten     / date       71%   <- reviewers look here first
+
+            Also sample some HIGH-confidence outputs each week to check they really are right.
+            Calibrate confidence per field against labelled data.
+
+            # TRAP: "97% accurate, ship it"
+      - id: "5.6"
+        title: Information provenance
+        summary: Keep claim-source mappings (claim, URL, document, excerpt, date) through synthesis. Show conflicting values with attribution.
+        rules:
+          - Require dates; different dates often explain different numbers.
+          - Render by content type: tables for financials, prose for news.
+        traps:
+          - Picking one of two conflicting statistics arbitrarily.
+        lab: "Lab 03"
+        example:
+          why: "Keep each claim tied to its source and date through every step. If two sources disagree, show both with dates instead of picking one."
+          code: |
+            {"claim": "Market size $4.2B", "source": "https://example.org/report",
+             "excerpt": "...valued at $4.2 billion...", "date": "2025-06"}
+            {"claim": "Market size $3.8B", "source": "https://example.com/brief",
+             "excerpt": "...a $3.8bn market...", "date": "2024-11"}
+
+            Output: "$4.2B (Jun 2025, example.org) vs $3.8B (Nov 2024, example.com)"
+
+            # TRAP: keep one number and drop where it came from

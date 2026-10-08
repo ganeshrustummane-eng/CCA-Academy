@@ -1,0 +1,2614 @@
+# Original seed questions (not real exam items). Add more via the question generator or PRs.
+questions:
+  - id: q-1.1-a
+    task: "1.1"
+    scenario: Customer Support Agent
+    stem: An agent loop ends whenever response.content[0].type == "text". Users report it stops mid-task after the model writes a short note before calling a tool. What is the correct fix?
+    options:
+      A: Branch on stop_reason; continue while it is tool_use and stop on end_turn.
+      B: Raise the maximum iteration count.
+      C: Search the text for phrases like "task complete".
+      D: Make the system prompt forbid text before tool calls.
+    answer: A
+    why:
+      A: stop_reason is the designed signal; text can accompany tool_use.
+      B: A cap does not fix the wrong completion signal.
+      C: Natural-language parsing is unreliable.
+      D: Probabilistic, and the bug stays in the code.
+  - id: q-1.1-b
+    task: "1.1"
+    scenario: Customer Support Agent
+    stem: After executing a requested tool, what must the loop do before the next API call?
+    options:
+      A: Discard the tool call to save tokens.
+      B: Append the tool result to the conversation history.
+      C: Start a fresh conversation with a summary.
+      D: Ask the user to confirm the result.
+    answer: B
+    why:
+      A: The model needs its own tool call in history.
+      B: Results must be in history so the model can reason on them.
+      C: Unnecessary and lossy.
+      D: Adds friction with no benefit.
+  - id: q-1.2-a
+    task: "1.2"
+    scenario: Multi-Agent Research
+    stem: A research report on "AI in creative industries" covers only visual arts. Search and synthesis agents ran correctly on their assignments. Where is the root cause?
+    options:
+      A: The synthesis agent should add missing topics.
+      B: The search agent needs a larger result limit.
+      C: The coordinator's task decomposition was too narrow.
+      D: The document-analysis agent lacks tools.
+    answer: C
+    why:
+      A: Synthesis can only use what it was given.
+      B: More results on the same narrow topic do not add music or film.
+      C: The coordinator defined the subtopics.
+      D: Tools were not the issue.
+  - id: q-1.2-b
+    task: "1.2"
+    scenario: Multi-Agent Research
+    stem: A synthesis subagent ignores earlier search results the coordinator saw. Why?
+    options:
+      A: Subagents inherit history only for the first call.
+      B: Shared memory expires after one minute.
+      C: The synthesis agent needs more tools.
+      D: Subagents have isolated context; findings must be passed in their prompt.
+    answer: D
+    why:
+      A: No automatic inheritance.
+      B: There is no shared memory.
+      C: Tools do not carry context.
+      D: Everything must be explicit in the prompt.
+  - id: q-1.3-a
+    task: "1.3"
+    scenario: Multi-Agent Research
+    stem: The final report has claims with no source. The search and analysis agents work correctly. What is the most likely cause?
+    options:
+      A: Findings were passed as plain prose without source metadata.
+      B: The synthesis model is too small.
+      C: Too many subagents ran in parallel.
+      D: The coordinator used auto tool_choice.
+    answer: A
+    why:
+      A: Structured claim-source mappings must travel with the content.
+      B: Not a size problem.
+      C: Parallelism does not remove metadata.
+      D: Unrelated.
+  - id: q-1.3-b
+    task: "1.3"
+    scenario: Multi-Agent Research
+    stem: Three independent searches are needed. How should the coordinator spawn them for the lowest latency?
+    options:
+      A: One Task call per turn.
+      B: Multiple Task calls in a single response.
+      C: A single subagent doing all three sequentially.
+      D: Ask the user to start them.
+    answer: B
+    why:
+      A: Serial and slower.
+      B: Parallel spawning in one response.
+      C: Serial inside one agent.
+      D: Not agentic.
+  - id: q-1.4-a
+    task: "1.4"
+    scenario: Customer Support Agent
+    stem: In 8% of cases the agent issues refunds before verifying account ownership. Which fix is correct?
+    options:
+      A: Few-shot examples of verification.
+      B: A stronger system prompt reminding it to verify.
+      C: A prerequisite gate that blocks process_refund until verification succeeds.
+      D: A classifier that routes refund requests.
+    answer: C
+    why:
+      A: Probabilistic.
+      B: Probabilistic.
+      C: Programmatic enforcement works every time.
+      D: Routing does not enforce ordering.
+  - id: q-1.4-b
+    task: "1.4"
+    scenario: Customer Support Agent
+    stem: What must an escalation handoff contain, given the human cannot see the transcript?
+    options:
+      A: Only the customer ID.
+      B: A link to the raw chat log.
+      C: The agent's confidence score.
+      D: A self-contained summary with customer ID, issue, root cause, amount and recommended action.
+    answer: D
+    why:
+      A: Not enough context.
+      B: The human lacks transcript access.
+      C: Confidence is unreliable and incomplete.
+      D: Handoffs must stand alone.
+  - id: q-1.5-a
+    task: "1.5"
+    scenario: Customer Support Agent
+    stem: Refunds above $500 must always go to a human. Where should this live?
+    options:
+      A: In a pre-execution tool-call hook that blocks and redirects.
+      B: In the system prompt as a rule.
+      C: In a few-shot example.
+      D: In the user's first message.
+    answer: A
+    why:
+      A: Hooks give deterministic guarantees.
+      B: Not guaranteed.
+      C: Not guaranteed.
+      D: Not controllable.
+  - id: q-1.6-a
+    task: "1.6"
+    scenario: CI/CD
+    stem: A 14-file single-pass review gives deep feedback on some files and misses obvious bugs in others. Best remedy?
+    options:
+      A: Use a larger context window only.
+      B: Per-file passes plus a separate cross-file integration pass.
+      C: Ask the model to "be thorough".
+      D: Review only the first five files.
+    answer: B
+    why:
+      A: Context size does not fix attention dilution.
+      B: Consistent per-file depth, then data-flow checks.
+      C: Vague.
+      D: Drops coverage.
+  - id: q-1.7-a
+    task: "1.7"
+    scenario: Developer Productivity
+    stem: You resume a session after editing three files and the agent contradicts itself about them. Best approach?
+    options:
+      A: Resume and ignore the contradictions.
+      B: Delete the three files.
+      C: Start fresh with an injected summary and name the changed files for re-analysis.
+      D: Increase temperature.
+    answer: C
+    why:
+      A: Stale tool results persist.
+      B: Destructive.
+      C: Fresh summary plus targeted re-analysis is reliable.
+      D: Irrelevant.
+  - id: q-2.1-a
+    task: "2.1"
+    scenario: Customer Support Agent
+    stem: get_customer and lookup_order both say "Retrieves information" and are constantly confused. What is the best first step?
+    options:
+      A: Add a routing classifier.
+      B: Merge both tools into one.
+      C: Add several few-shot examples.
+      D: Expand each description with purpose, inputs, examples and boundaries.
+    answer: D
+    why:
+      A: Over-engineered first step.
+      B: High effort.
+      C: Treats a symptom with token overhead.
+      D: Descriptions drive selection.
+  - id: q-2.2-a
+    task: "2.2"
+    scenario: Customer Support Agent
+    stem: A lookup returns an empty array. The agent retries three times then escalates, but the account simply does not exist. What went wrong?
+    options:
+      A: It treated a valid empty result as an access failure.
+      B: The timeout was too short.
+      C: The model temperature was too high.
+      D: The database was down.
+    answer: A
+    why:
+      A: Empty success is the answer; do not retry.
+      B: No evidence of timeout.
+      C: Unrelated.
+      D: Then it would be an error, not an empty success.
+  - id: q-2.2-b
+    task: "2.2"
+    scenario: Customer Support Agent
+    stem: A refund exceeds policy limits. Which error category and retry flag?
+    options:
+      A: Transient, retryable.
+      B: Business, not retryable.
+      C: Validation, retryable.
+      D: Permission, retryable.
+    answer: B
+    why:
+      A: Retrying will not change the policy.
+      B: Policy violations are non-retryable and need an alternative workflow.
+      C: Input is valid.
+      D: Not an access issue.
+  - id: q-2.3-a
+    task: "2.3"
+    scenario: Multi-Agent Research
+    stem: A synthesis agent returns to the coordinator for simple fact checks, adding latency. 85% are simple lookups. Best design?
+    options:
+      A: Give it all web search tools.
+      B: Remove verification.
+      C: Give it a scoped verify_fact tool; route complex cases through the coordinator.
+      D: Batch all verifications at the end.
+    answer: C
+    why:
+      A: Tool overload and role blur.
+      B: Hurts quality.
+      C: Constrained tool handles the common case.
+      D: Delays and complicates.
+  - id: q-2.3-b
+    task: "2.3"
+    scenario: Structured Extraction
+    stem: Documents come in unknown types, each with its own extraction tool. You need structured output every time. Which tool_choice?
+    options:
+      A: auto
+      B: Forced to one named tool
+      C: none
+      D: any
+    answer: D
+    why:
+      A: May return text.
+      B: Wrong for unknown types.
+      C: No tools.
+      D: Must call a tool and may pick the matching schema.
+  - id: q-2.4-a
+    task: "2.4"
+    scenario: Developer Productivity
+    stem: How should a shared .mcp.json handle a GitHub token?
+    options:
+      A: Use ${GITHUB_TOKEN} expansion; each developer sets it locally.
+      B: Paste the token in the file.
+      C: Put the token in CLAUDE.md.
+      D: Commit it to a private branch.
+    answer: A
+    why:
+      A: Keeps secrets out of version control.
+      B: Leaks secrets in git.
+      C: Also committed.
+      D: Still stored in git.
+  - id: q-2.5-a
+    task: "2.5"
+    scenario: Developer Productivity
+    stem: Find every caller of a deprecated function. Which tool?
+    options:
+      A: Glob
+      B: Grep
+      C: Edit
+      D: Read all files
+    answer: B
+    why:
+      A: Matches paths not contents.
+      B: Searches file contents.
+      C: Modifies files.
+      D: Burns context.
+  - id: q-3.1-a
+    task: "3.1"
+    scenario: Code Generation
+    stem: Developer A gets consistent API naming; new hire B does not. Same repo. Likely cause?
+    options:
+      A: The repo is too large.
+      B: B uses a different OS.
+      C: Conventions live in A's user-level ~/.claude/CLAUDE.md.
+      D: B needs more tokens.
+    answer: C
+    why:
+      A: Irrelevant.
+      B: Irrelevant.
+      C: User-level config is not shared via git.
+      D: Irrelevant.
+  - id: q-3.2-a
+    task: "3.2"
+    scenario: Code Generation
+    stem: A skill produces very verbose output that clutters the main chat. Which frontmatter helps?
+    options:
+      A: none
+      B: argument-hint
+      C: allowed-tools
+      D: context fork
+    answer: D
+    why:
+      A: There is a solution.
+      B: Prompts for arguments.
+      C: Restricts tools.
+      D: Runs in an isolated subagent context.
+  - id: q-3.3-a
+    task: "3.3"
+    scenario: Code Generation
+    stem: Test files live beside source across 50+ directories and must follow one convention. Best option?
+    options:
+      A: A .claude/rules file with paths glob **/*.test.*
+      B: A CLAUDE.md in each directory.
+      C: A single always-loaded root CLAUDE.md with all rules.
+      D: A skill invoked manually.
+    answer: A
+    why:
+      A: Globs span the codebase and load only when relevant.
+      B: Maintenance burden.
+      C: Always loaded, wasteful.
+      D: Easy to forget.
+  - id: q-3.4-a
+    task: "3.4"
+    scenario: Code Generation
+    stem: Which task is best suited to plan mode?
+    options:
+      A: Fix a null check in one function.
+      B: Migrate a logging library across 40 files.
+      C: Rename a local variable.
+      D: Add a missing semicolon.
+    answer: B
+    why:
+      A: Direct execution.
+      B: Multi-file with design choices.
+      C: Direct execution.
+      D: Direct execution.
+  - id: q-3.5-a
+    task: "3.5"
+    scenario: Code Generation
+    stem: Claude interprets your prose description of a transformation differently each time. What first?
+    options:
+      A: Write a longer description.
+      B: Switch models.
+      C: Provide 2-3 concrete input/output examples.
+      D: Repeat the request in capitals.
+    answer: C
+    why:
+      A: Same ambiguity.
+      B: Unnecessary.
+      C: Examples generalise reliably.
+      D: No effect.
+  - id: q-3.6-a
+    task: "3.6"
+    scenario: CI/CD
+    stem: A CI job running claude "Analyze this PR" hangs. What fixes it?
+    options:
+      A: Run it twice.
+      B: Increase job timeout.
+      C: Pipe yes into it.
+      D: Add the -p flag for non-interactive mode.
+    answer: D
+    why:
+      A: Same issue.
+      B: Still hangs.
+      C: Hacky.
+      D: Print mode runs non-interactively.
+  - id: q-4.1-a
+    task: "4.1"
+    scenario: CI/CD
+    stem: A review bot has many false positives and developers ignore it. Which change works best?
+    options:
+      A: Define categories to report vs skip with code examples; disable the noisiest category meanwhile.
+      B: Add "be conservative" to the prompt.
+      C: Ask for confidence scores and filter below 0.9.
+      D: Review fewer PRs.
+    answer: A
+    why:
+      A: Explicit criteria restore trust.
+      B: Vague.
+      C: Self-reported confidence is poorly calibrated.
+      D: Avoids the problem.
+  - id: q-4.2-a
+    task: "4.2"
+    scenario: Structured Extraction
+    stem: Extraction leaves fields null even when the data exists in odd layouts. Best remedy?
+    options:
+      A: Longer instructions only.
+      B: Few-shot examples showing varied document structures.
+      C: Lower temperature.
+      D: Larger batch sizes.
+    answer: B
+    why:
+      A: Less effective than examples.
+      B: Examples teach layout handling.
+      C: Does not teach layouts.
+      D: Unrelated.
+  - id: q-4.3-a
+    task: "4.3"
+    scenario: Structured Extraction
+    stem: A source lacks a field marked required in the schema; the model invents a value. Schema fix?
+    options:
+      A: Retry until it is filled.
+      B: Add a stricter regex.
+      C: Make the field nullable/optional.
+      D: Remove validation.
+    answer: C
+    why:
+      A: Encourages fabrication.
+      B: Invented values may still match.
+      C: Allows honest absence and prevents fabrication.
+      D: Worse.
+  - id: q-4.4-a
+    task: "4.4"
+    scenario: Structured Extraction
+    stem: Which failure can a validation-retry loop fix?
+    options:
+      A: Information absent from the source.
+      B: A missing document.
+      C: A scanned page that is blank.
+      D: A value placed in the wrong field.
+    answer: D
+    why:
+      A: Retry cannot create data.
+      B: No data.
+      C: No data.
+      D: Format and placement errors are fixable with feedback.
+  - id: q-4.5-a
+    task: "4.5"
+    scenario: CI/CD
+    stem: A manager wants all review workloads moved to the Batch API for 50% savings. What is the correct response?
+    options:
+      A: Batch the overnight reports only; keep blocking pre-merge checks synchronous.
+      B: Agree; move everything.
+      C: Use batch with multi-turn tool calls.
+      D: Reject batch entirely.
+    answer: A
+    why:
+      A: Match latency tolerance to API.
+      B: Batch has no latency guarantee.
+      C: Multi-turn tool calling is not supported in batch.
+      D: Overnight jobs benefit.
+  - id: q-4.6-a
+    task: "4.6"
+    scenario: CI/CD
+    stem: Why use an independent instance to review generated code?
+    options:
+      A: It is cheaper.
+      B: The generating session retains reasoning that makes it less likely to question itself.
+      C: It runs faster.
+      D: It avoids using tools.
+    answer: B
+    why:
+      A: Not the reason.
+      B: Fresh context catches subtler issues.
+      C: Not the reason.
+      D: Not the reason.
+  - id: q-5.1-a
+    task: "5.1"
+    scenario: Customer Support Agent
+    stem: After long chats the agent forgets that the refund is $247.83 for order 8891. What mitigation?
+    options:
+      A: Shorter replies.
+      B: More aggressive summarisation.
+      C: A persistent case-facts block, never summarised, in each prompt.
+      D: Ask the customer each time.
+    answer: C
+    why:
+      A: Irrelevant.
+      B: Makes it worse.
+      C: Preserves exact transactional facts.
+      D: Poor experience.
+  - id: q-5.2-a
+    task: "5.2"
+    scenario: Customer Support Agent
+    stem: A customer says "I want to speak to a human." What should the agent do?
+    options:
+      A: Try to resolve first.
+      B: Ask for a confidence score.
+      C: Run sentiment analysis first.
+      D: Escalate immediately.
+    answer: D
+    why:
+      A: Disrespects an explicit request.
+      B: Unreliable trigger.
+      C: Unreliable trigger.
+      D: Honour immediately.
+  - id: q-5.3-a
+    task: "5.3"
+    scenario: Multi-Agent Research
+    stem: One subagent's source times out. What should the coordinator receive?
+    options:
+      A: A structured error with failure type, attempted query, partial results and alternatives.
+      B: An empty success.
+      C: Nothing; the workflow aborts.
+      D: A generic "failed" string.
+    answer: A
+    why:
+      A: Enables recovery and coverage annotations.
+      B: Silent suppression.
+      C: Throws away partial results.
+      D: Not actionable.
+  - id: q-5.4-a
+    task: "5.4"
+    scenario: Developer Productivity
+    stem: In a long exploration the agent starts citing "typical patterns" instead of classes it found. What helps?
+    options:
+      A: Reading more files.
+      B: Scratchpad files and delegating investigations to subagents.
+      C: Restarting every minute.
+      D: Disabling tools.
+    answer: B
+    why:
+      A: Adds more noise.
+      B: Preserves findings and limits noise.
+      C: Loses state.
+      D: Counterproductive.
+  - id: q-5.5-a
+    task: "5.5"
+    scenario: Structured Extraction
+    stem: Overall extraction accuracy is 97%. Why not automate fully?
+    options:
+      A: Humans are always better.
+      B: 97% is always too low.
+      C: The aggregate can hide a very weak document type or field.
+      D: Batch cannot be used.
+    answer: C
+    why:
+      A: Not generally true.
+      B: Depends on the segment error rates.
+      C: Validate by segment before automating.
+      D: Unrelated.
+  - id: q-5.6-a
+    task: "5.6"
+    scenario: Multi-Agent Research
+    stem: Two credible sources give different growth figures. What should synthesis do?
+    options:
+      A: Pick the larger.
+      B: Drop both.
+      C: Average them.
+      D: Present both with attribution and dates.
+    answer: D
+    why:
+      A: Arbitrary.
+      B: Loses information.
+      C: Invents a number.
+      D: Let the reader decide; dates may explain it.
+
+# ---------------------------------------------------------------------------
+# D1 Agentic Architecture & Orchestration — bank expansion to 5 per task.
+# level: 1 foundational recall / 2 applied / 3 architectural judgement.
+# Absent level means 2 (the original 36 seed questions).
+# ---------------------------------------------------------------------------
+  - id: q-1.1-c
+    task: "1.1"
+    level: 1
+    scenario: Customer Support Agent
+    stem: >-
+      Which stop_reason value signals that the model has requested one or more
+      tools and expects the loop to execute them and call back?
+    options:
+      A: tool_use
+      B: end_turn
+      C: max_tokens
+      D: stop_sequence
+    answer: A
+    why:
+      A: tool_use is the designed signal that tools were requested.
+      B: end_turn means the model considers the task finished.
+      C: max_tokens means the response was cut off by the output limit.
+      D: stop_sequence means a configured stop string was emitted.
+  - id: q-1.1-d
+    task: "1.1"
+    level: 3
+    scenario: Customer Support Agent
+    stem: >-
+      Finance wants a hard ceiling on spend per conversation, but the team has
+      been burned by a loop that quit mid-refund. How should both requirements
+      be satisfied?
+    options:
+      A: Keep the iteration cap as the only stop condition and raise it until complaints stop.
+      B: Branch on stop_reason for correctness and keep a generous cap purely as a runaway backstop that reports an incomplete result.
+      C: Ask the model in the system prompt to use no more than ten tool calls.
+      D: Stop as soon as accumulated token usage crosses the budget and return whatever text exists.
+    answer: B
+    why:
+      A: A cap as the primary signal is exactly the bug that quit mid-refund.
+      B: Correctness comes from stop_reason; the cap only bounds the pathological case and says so.
+      C: A prompt request is probabilistic and gives finance no guarantee.
+      D: Truncating mid-refund silently is the failure mode being complained about.
+  - id: q-1.1-e
+    task: "1.1"
+    level: 3
+    scenario: Customer Support Agent
+    stem: >-
+      One assistant turn returns three tool_use blocks at once. The loop
+      executes the first, appends its result and immediately calls the API
+      again. What goes wrong?
+    options:
+      A: Nothing — the model will re-request the other two tools next turn.
+      B: The API rejects any response containing more than one tool_use block.
+      C: The history now has tool_use blocks with no matching tool_result, so the request is malformed and the dropped work is invisible.
+      D: Token cost doubles because the same turn is sent twice.
+    answer: C
+    why:
+      A: The model may re-request them, but may also proceed as if all three succeeded.
+      B: Multiple tool_use blocks in one response are normal and are meant to run in parallel.
+      C: Every tool_use block needs a matching tool_result in the next message.
+      D: Cost is not the defect; the malformed history is.
+  - id: q-1.2-c
+    task: "1.2"
+    level: 1
+    scenario: Multi-Agent Research
+    stem: >-
+      In a hub-and-spoke multi-agent system, which component decomposes the
+      task, delegates it and aggregates the results?
+    options:
+      A: Each subagent, by negotiating scope with its peers.
+      B: The last subagent to finish, which collects the others' output.
+      C: The tool layer, which routes calls to whichever agent is idle.
+      D: The coordinator.
+    answer: D
+    why:
+      A: Subagents have isolated context and never talk to each other.
+      B: Subagents cannot see each other's results.
+      C: Tools execute calls; they do not own orchestration.
+      D: Decomposition, delegation and aggregation are the coordinator's job.
+  - id: q-1.2-d
+    task: "1.2"
+    level: 3
+    scenario: Multi-Agent Research
+    stem: >-
+      Two search subagents returned largely the same sources, and the final
+      report cites one study twice under different headings. What is the most
+      direct fix?
+    options:
+      A: Partition the coordinator's assignments so each subagent owns a disjoint slice of the question.
+      B: Add a deduplication step to the synthesis agent and keep the assignments as they are.
+      C: Let the two search agents exchange their result lists before synthesising.
+      D: Reduce each search agent's result limit so there is less overlap.
+    answer: A
+    why:
+      A: Overlap is a decomposition defect, so it is fixed in the partition.
+      B: Deduplication hides wasted work instead of preventing it.
+      C: Subagents have isolated context and cannot message each other.
+      D: A smaller limit shrinks coverage without making the slices disjoint.
+  - id: q-1.2-e
+    task: "1.2"
+    level: 3
+    scenario: Multi-Agent Research
+    stem: >-
+      A subagent prompt says to use the competitor list the pricing agent
+      already gathered. The subagent returns an empty result every time. Why?
+    options:
+      A: The subagent lacks permission to read the pricing agent's tools.
+      B: Subagent context is isolated, so anything it needs must be passed in its own prompt.
+      C: Subagent prompts cannot reference another agent by name.
+      D: The pricing agent must finish before any other subagent is spawned.
+    answer: B
+    why:
+      A: Permissions are not the issue; the data simply is not in its context.
+      B: Nothing is inherited, so the competitor list has to be embedded in the prompt.
+      C: Naming is harmless; the referenced content is what is absent.
+      D: Ordering would not help, because the result still would not be visible.
+  - id: q-1.3-c
+    task: "1.3"
+    level: 1
+    scenario: Multi-Agent Research
+    stem: >-
+      Which tool must appear in allowedTools before an agent can spawn
+      subagents?
+    options:
+      A: Bash
+      B: Glob
+      C: Task
+      D: WebFetch
+    answer: C
+    why:
+      A: Bash runs shell commands, not subagents.
+      B: Glob matches file paths.
+      C: The Task tool spawns subagents and must be permitted.
+      D: WebFetch retrieves a URL.
+  - id: q-1.3-d
+    task: "1.3"
+    level: 3
+    scenario: Multi-Agent Research
+    stem: >-
+      The final report's claims cannot be traced to any source, even though
+      every search subagent returned URLs. What was most likely lost?
+    options:
+      A: The subagents' tool definitions, so they searched without citations.
+      B: The search tool's result limit, which truncated the URLs.
+      C: The coordinator's system prompt, which normally states the citation format.
+      D: The structured metadata — source, page, date — dropped when findings were handed back as prose.
+    answer: D
+    why:
+      A: URLs were returned, so the tools worked.
+      B: Truncation would lose some sources, not every attribution.
+      C: A format instruction cannot restore metadata that is no longer present.
+      D: Provenance survives only if source metadata travels with each finding.
+  - id: q-1.3-e
+    task: "1.3"
+    level: 3
+    scenario: Multi-Agent Research
+    stem: >-
+      Four independent market segments need researching, and the coordinator
+      issues one Task call per turn across four turns. What does this cost, and
+      what is the fix?
+    options:
+      A: Latency is roughly four times higher than necessary — issue all four Task calls in one response so they run in parallel.
+      B: Nothing is lost, because subagents always run sequentially.
+      C: Context is lost between turns, so the four calls must be merged into one subagent.
+      D: Each turn re-reads the coordinator's history, so the fix is a shorter system prompt.
+    answer: A
+    why:
+      A: Independent work issued together runs concurrently.
+      B: Several Task calls in one response do run in parallel.
+      C: Merging four segments into one subagent dilutes attention rather than helping.
+      D: Prompt length is not what serialised the work.
+  - id: q-1.4-c
+    task: "1.4"
+    level: 1
+    scenario: Customer Support Agent
+    stem: >-
+      A policy says no refund above $500 may be issued without human approval.
+      Where does this rule belong?
+    options:
+      A: In the system prompt, stated firmly and repeated.
+      B: In a programmatic pre-call gate that blocks the refund tool and escalates.
+      C: In a few-shot example showing a large refund being declined.
+      D: In the refund tool's description, so the model knows the limit.
+    answer: B
+    why:
+      A: Prompt wording is probabilistic and will eventually be ignored.
+      B: Money rules need a deterministic gate in code.
+      C: Examples shape tendency, not guarantees.
+      D: A description informs the model but enforces nothing.
+  - id: q-1.4-d
+    task: "1.4"
+    level: 3
+    scenario: Customer Support Agent
+    stem: >-
+      An agent escalates to a human, who replies asking what the case is about.
+      The handoff payload contained only the customer's last message. What is
+      missing?
+    options:
+      A: The full conversation transcript, which the human should read in order.
+      B: A link back to the live agent session so the human can continue the chat.
+      C: A self-contained packet — customer ID, issue summary, root cause, amount and recommended action.
+      D: The agent's confidence score for the escalation decision.
+    answer: C
+    why:
+      A: Humans do not read the transcript; a summary is what they act on.
+      B: Resuming the session still leaves the human to reconstruct the case.
+      C: A handoff must stand alone and state the decision being asked for.
+      D: A self-reported score does not tell the human what to do.
+  - id: q-1.4-e
+    task: "1.4"
+    level: 3
+    scenario: Customer Support Agent
+    stem: >-
+      Refunds are occasionally issued before ownership of the order is
+      verified. An engineer proposes a routing classifier that detects refund
+      intent and sends it down a verified path. Assess this.
+    options:
+      A: Sound — classification is the standard way to enforce ordering.
+      B: Wrong — the verify tool should simply be listed first in the tools array.
+      C: Sound, provided the classifier is trained on labelled refund requests.
+      D: Wrong tool — this is an ordering constraint, so a prerequisite gate that blocks the refund tool until verification passes is smaller and deterministic.
+    answer: D
+    why:
+      A: A classifier adds a probabilistic component to a deterministic problem.
+      B: Tool order in the array does not constrain call order.
+      C: Training quality does not turn a classifier into a guarantee.
+      D: A prerequisite gate enforces the order in code and cannot be talked around.
+  - id: q-1.5-b
+    task: "1.5"
+    level: 1
+    scenario: Customer Support Agent
+    stem: >-
+      What does a PostToolUse hook let you do?
+    options:
+      A: Transform or normalise the tool's output before the model sees it.
+      B: Decide whether the tool should run at all.
+      C: Change which tools are available on the next turn.
+      D: Rewrite the user's message before the model reads it.
+    answer: A
+    why:
+      A: PostToolUse sits between the tool result and the model.
+      B: That is a pre-call hook's job.
+      C: Tool availability is configuration, not a post-tool concern.
+      D: The user message is not a tool result.
+  - id: q-1.5-c
+    task: "1.5"
+    level: 2
+    scenario: Customer Support Agent
+    stem: >-
+      Three tools return timestamps in three formats, and the model keeps
+      miscomparing order dates. What is the smallest reliable fix?
+    options:
+      A: Tell the model in the system prompt which format each tool uses.
+      B: A PostToolUse hook that normalises every timestamp to one format before the model sees it.
+      C: Add a convert_timestamp tool the model can call when unsure.
+      D: Ask each tool's owner to change their API.
+    answer: B
+    why:
+      A: The model would have to apply the rule correctly every time.
+      B: Normalising once in a hook removes the ambiguity deterministically.
+      C: An extra tool adds a step the model may skip.
+      D: Changing three upstream APIs is the largest possible fix.
+  - id: q-1.5-d
+    task: "1.5"
+    level: 3
+    scenario: Customer Support Agent
+    stem: >-
+      Compliance asks for evidence that a rule held on every request last
+      quarter. The rule is currently a system-prompt instruction. What changes?
+    options:
+      A: Nothing — export the transcripts and sample them for violations.
+      B: Repeat the rule at the end of the prompt, where recall is better.
+      C: Move the rule into a hook, which enforces it deterministically and produces a per-call record that it was applied.
+      D: Lower the temperature so the model follows instructions consistently.
+    answer: C
+    why:
+      A: Sampling shows what happened, not that the rule always held.
+      B: Repetition improves odds and proves nothing.
+      C: A hook gives both the guarantee and the audit trail compliance needs.
+      D: Temperature reduces variation but offers no guarantee.
+  - id: q-1.5-e
+    task: "1.5"
+    level: 3
+    scenario: Customer Support Agent
+    stem: >-
+      A refund limit is validated inside the refund tool, which returns an
+      error above $500. A reviewer argues for a pre-call hook instead. What is
+      the real difference?
+    options:
+      A: None — both block the call, so the in-tool check is simpler and should stay.
+      B: In-tool validation cannot return a structured error to the model.
+      C: The hook is faster because it avoids a network round trip.
+      D: A hook blocks and redirects before the call happens and applies across tools, whereas in-tool validation protects one tool and only while its owner keeps it.
+    answer: D
+    why:
+      A: In-tool checks protect only that tool, and only while its owner keeps them.
+      B: Tools can and should return structured errors regardless.
+      C: Latency is a minor side benefit, not the reason to choose.
+      D: A hook is a policy layer outside the tool, so it survives tool changes and covers siblings.
+  - id: q-1.6-b
+    task: "1.6"
+    level: 1
+    scenario: Code Generation
+    stem: >-
+      Which decomposition strategy suits work whose steps are known in advance
+      and repeat the same way each run?
+    options:
+      A: A fixed pipeline of defined stages.
+      B: Adaptive decomposition, re-planned after each step.
+      C: A single prompt containing all stages.
+      D: One subagent per file, assigned at random.
+    answer: A
+    why:
+      A: Predictable, repeating work is exactly what a fixed pipeline is for.
+      B: Adaptive planning pays for flexibility that predictable work does not need.
+      C: One prompt for all stages dilutes attention.
+      D: Random assignment is not a strategy.
+  - id: q-1.6-c
+    task: "1.6"
+    level: 2
+    scenario: Code Generation
+    stem: >-
+      A review of 14 files in one pass reports five issues in the first two
+      files and almost nothing after. What explains this?
+    options:
+      A: The later files are genuinely cleaner.
+      B: Attention dilutes across a long input, so review depth decays and findings become inconsistent.
+      C: The output token limit truncated the findings list.
+      D: The model deduplicated findings it had already reported.
+    answer: B
+    why:
+      A: Possible, but the decay tracks position rather than code quality.
+      B: Long single passes give uneven depth, which is why work is split per file.
+      C: Truncation would cut the end of the text, not thin the middle.
+      D: Deduplication would not silence whole files.
+  - id: q-1.6-d
+    task: "1.6"
+    level: 3
+    scenario: Code Generation
+    stem: >-
+      Per-file review passes now give consistent depth, but a bug where one
+      file writes a field another file reads with the wrong type went
+      unnoticed. What is the right addition?
+    options:
+      A: Increase each per-file pass's budget so it can read imported files too.
+      B: Go back to one pass over all 14 files.
+      C: Add a separate integration pass whose only job is cross-file data flow.
+      D: Ask each per-file pass to speculate about callers it cannot see.
+    answer: C
+    why:
+      A: Letting each pass wander into imports reintroduces dilution and duplicates work.
+      B: That restores the dilution problem just solved.
+      C: Cross-file defects need a pass whose scope is the seams between files.
+      D: Speculation without the other file produces noise.
+  - id: q-1.6-e
+    task: "1.6"
+    level: 3
+    scenario: Multi-Agent Research
+    stem: >-
+      An investigation starts from why Q3 churn rose, where neither the causes
+      nor the number of steps is knowable up front. Which shape fits?
+    options:
+      A: A fixed pipeline with stages for pricing, support and product.
+      B: A single long prompt describing every hypothesis to check.
+      C: One subagent per department, run once in parallel, then synthesise.
+      D: Adaptive decomposition — plan one layer, read the findings, then choose the next layer from what was learned.
+    answer: D
+    why:
+      A: A fixed pipeline presumes the answer lies in the stages chosen in advance.
+      B: One prompt over every hypothesis dilutes attention and still cannot follow up.
+      C: A single parallel fan-out cannot follow a lead it uncovers.
+      D: Open-ended questions need the next step chosen from the last step's findings.
+  - id: q-1.7-b
+    task: "1.7"
+    level: 1
+    scenario: Developer Productivity
+    stem: >-
+      You want to try two different refactoring approaches from the same
+      analysis baseline and keep both for comparison. Which session operation
+      fits?
+    options:
+      A: Fork the session from the baseline.
+      B: Resume the session twice.
+      C: Start fresh with an injected summary.
+      D: Compact the session, then continue.
+    answer: A
+    why:
+      A: Forking branches from a shared baseline, which is what comparison needs.
+      B: Resuming twice continues one timeline, so the branches collide.
+      C: A fresh start discards the baseline both branches should share.
+      D: Compacting shortens context; it does not create branches.
+  - id: q-1.7-c
+    task: "1.7"
+    level: 2
+    scenario: Developer Productivity
+    stem: >-
+      An agent analysed six files yesterday. Overnight, two of them were
+      rewritten. You resume the session. What should you do first?
+    options:
+      A: Nothing — the agent will re-read files as needed.
+      B: Tell the agent exactly which files changed so it re-analyses those targeted.
+      C: Ask it to re-read all six files from scratch.
+      D: Start a brand new session with no context.
+    answer: B
+    why:
+      A: It will happily reason from the stale analysis already in context.
+      B: Naming the changed files makes the re-analysis targeted and cheap.
+      C: Re-reading all six wastes the four that are still valid.
+      D: Discarding valid analysis costs more than correcting part of it.
+  - id: q-1.7-d
+    task: "1.7"
+    level: 3
+    scenario: Developer Productivity
+    stem: >-
+      A long session's context is dominated by tool results from a schema that
+      has since been migrated. Resuming produces confidently wrong advice. What
+      is the right move?
+    options:
+      A: Resume and correct each wrong statement as it appears.
+      B: Fork the session so the stale branch is preserved.
+      C: Start fresh and inject a written summary of the conclusions that are still true.
+      D: Raise the context window limit so newer results fit alongside.
+    answer: C
+    why:
+      A: Correcting output one claim at a time leaves the stale evidence in context.
+      B: Forking carries the stale tool results into both branches.
+      C: A fresh start with a curated summary keeps the conclusions and drops the stale results.
+      D: More room does not stop the model reasoning from outdated results.
+  - id: q-1.7-e
+    task: "1.7"
+    level: 3
+    scenario: Developer Productivity
+    stem: >-
+      A team wants crashed long-running agent runs to resume without redoing
+      hours of exploration. What should the run produce as it goes?
+    options:
+      A: Verbose logs of every model response, kept for replay.
+      B: A snapshot of the context window saved after every turn.
+      C: A larger iteration cap so the run is less likely to stop.
+      D: A durable manifest of findings and progress written outside the session, so a new session can be seeded from it.
+    answer: D
+    why:
+      A: Logs record what was said without making the state reloadable.
+      B: Replaying raw context restores the noise along with the findings.
+      C: A bigger cap does not help a crash.
+      D: Externalising findings is what lets a new session pick up the work.
+
+# ---------------------------------------------------------------------------
+# D2 Tool Design & MCP Integration
+# ---------------------------------------------------------------------------
+  - id: q-2.1-b
+    task: "2.1"
+    level: 1
+    scenario: Customer Support Agent
+    stem: >-
+      What is the primary mechanism the model uses to decide which tool to call?
+    options:
+      A: The tool description.
+      B: The order the tools appear in the tools array.
+      C: The number of required parameters each tool declares.
+      D: Few-shot examples in the user message.
+    answer: A
+    why:
+      A: Descriptions are the primary selection mechanism, so they carry purpose, inputs and edge cases.
+      B: Array order carries no selection meaning.
+      C: The schema constrains arguments, not selection.
+      D: Examples can nudge behaviour but are not the selection mechanism.
+  - id: q-2.1-c
+    task: "2.1"
+    level: 2
+    scenario: Customer Support Agent
+    stem: >-
+      An agent keeps calling search_orders when the user asks about a shipment,
+      ignoring track_shipment. What should be tried first?
+    options:
+      A: Add three few-shot examples of shipment questions routed correctly.
+      B: Rewrite both descriptions to state when to use each one versus the other.
+      C: Merge the two tools into one lookup tool with a type parameter.
+      D: Add a classifier in front of the agent to pick the tool.
+    answer: B
+    why:
+      A: Examples are a heavier fix for what is usually a description gap.
+      B: Misrouting is a description problem first, including the when-not-to-use boundary.
+      C: Consolidating makes selection vaguer, not sharper.
+      D: A classifier adds a component to compensate for unclear descriptions.
+  - id: q-2.1-d
+    task: "2.1"
+    level: 3
+    scenario: Customer Support Agent
+    stem: >-
+      After sharpening two tool descriptions, misrouting gets worse rather than
+      better. What is the most likely cause?
+    options:
+      A: Descriptions have a length limit that was exceeded.
+      B: Tool descriptions are cached and the old ones are still in effect.
+      C: The system prompt uses keywords that now conflict with the new descriptions.
+      D: Two tools cannot share any vocabulary in their descriptions.
+    answer: C
+    why:
+      A: Length was not the constraint being hit.
+      B: Descriptions travel with each request and are not cached that way.
+      C: The system prompt and descriptions are read together, so keyword conflicts must be re-checked after any change.
+      D: Shared vocabulary is fine when the boundary is stated.
+  - id: q-2.1-e
+    task: "2.1"
+    level: 3
+    scenario: Customer Support Agent
+    stem: >-
+      A single query_database tool is called for order lookups, refund history
+      and inventory, and arguments are frequently malformed. What is the
+      structural fix?
+    options:
+      A: Add stricter JSON schema validation and return errors until the model gets it right.
+      B: Set tool_choice to that tool so it is always called correctly.
+      C: Expand the description with one example per use case.
+      D: Split it into purpose-specific tools whose schemas only accept what that purpose needs.
+    answer: D
+    why:
+      A: Validation catches the symptom on every call instead of removing the ambiguity.
+      B: Forcing the call does not make its arguments correct.
+      C: More examples narrow the odds; they do not narrow the schema.
+      D: Purpose-specific tools make the right argument shape the only expressible one.
+  - id: q-2.2-c
+    task: "2.2"
+    level: 1
+    scenario: Customer Support Agent
+    stem: >-
+      Which error category should be marked as not retryable?
+    options:
+      A: A business rule rejection, such as an order outside the refund window.
+      B: A timeout contacting the orders service.
+      C: A rate limit response.
+      D: A transient connection reset.
+    answer: A
+    why:
+      A: A business rule will reject the same request every time, so retrying wastes calls.
+      B: Timeouts are transient and worth retrying.
+      C: Rate limits are retryable after a delay.
+      D: Connection resets are transient.
+  - id: q-2.2-d
+    task: "2.2"
+    level: 3
+    scenario: Multi-Agent Research
+    stem: >-
+      A search tool returns an empty list for a valid query. The agent retries
+      three times, then escalates saying the search is broken. What went wrong?
+    options:
+      A: The retry count is too low to overcome intermittent indexing delays.
+      B: A valid empty result was treated as a failure; it is the answer, and only access failures are retryable.
+      C: The tool should have raised an error instead of returning an empty list.
+      D: The agent should have escalated immediately rather than retrying.
+    answer: B
+    why:
+      A: More retries repeat a successful call that happens to have no matches.
+      B: Distinguishing an access failure from a valid empty result is the whole point of the category field.
+      C: An empty result is not an error and should not be reported as one.
+      D: Escalation is also wrong, because nothing failed.
+  - id: q-2.2-e
+    task: "2.2"
+    level: 3
+    scenario: Multi-Agent Research
+    stem: >-
+      A subagent covering three regions has one region's data source return a
+      permission error. What should it hand back to the coordinator?
+    options:
+      A: An error for the whole assignment, so the coordinator can retry it cleanly.
+      B: Only the two completed regions, since partial success is still success.
+      C: The two regions it completed, plus a structured note naming the failed region, the error category and that it is not retryable without new credentials.
+      D: A retry of the permission error until credentials appear.
+    answer: C
+    why:
+      A: Discarding two-thirds of completed work to report one failure is wasteful.
+      B: Silently dropping a region makes the gap invisible in the final report.
+      C: Recover locally, propagate only what cannot be fixed, and carry partial results with an explicit coverage gap.
+      D: Permission errors are not retryable.
+  - id: q-2.3-c
+    task: "2.3"
+    level: 1
+    scenario: Customer Support Agent
+    stem: >-
+      Which tool_choice setting allows the model to answer with text and call no
+      tool at all?
+    options:
+      A: required
+      B: any
+      C: A named tool
+      D: auto
+    answer: D
+    why:
+      A: There is no required option in this set.
+      B: any requires that some tool be called.
+      C: Naming a tool forces that specific call.
+      D: auto lets the model decide, including replying with text only.
+  - id: q-2.3-d
+    task: "2.3"
+    level: 3
+    scenario: Multi-Agent Research
+    stem: >-
+      A synthesis agent needs to confirm a single figure but has been given the
+      full 18-tool research toolset and now wanders into fresh searches. What is
+      the fix?
+    options:
+      A: Give it a scoped verify_fact tool and remove the broad research tools from its definition.
+      B: Set tool_choice to any so it stops replying with text.
+      C: Instruct it in the system prompt not to start new research.
+      D: Lower its max_tokens so it cannot afford extra calls.
+    answer: A
+    why:
+      A: Keeping 4 to 5 role-scoped tools per agent removes the temptation structurally.
+      B: Forcing a tool call does not stop it choosing the wrong one.
+      C: A prompt instruction competes with 18 available tools.
+      D: Token limits truncate output rather than constrain tool choice.
+  - id: q-2.3-e
+    task: "2.3"
+    level: 3
+    scenario: Structured Extraction
+    stem: >-
+      A pipeline must always begin by classifying the document type before
+      anything else. Which configuration expresses that?
+    options:
+      A: tool_choice auto, with the classifier described as the first step.
+      B: tool_choice set to the classify_document tool on the first request, then auto for the rest.
+      C: tool_choice any for every request in the pipeline.
+      D: Put classify_document first in the tools array.
+    answer: B
+    why:
+      A: auto permits the model to skip the classifier.
+      B: A forced named tool guarantees the mandatory first step, after which auto is appropriate.
+      C: any guarantees some tool, not the right one.
+      D: Array position does not constrain the call.
+  - id: q-2.4-b
+    task: "2.4"
+    level: 1
+    scenario: Developer Productivity
+    stem: >-
+      Which MCP configuration file is intended to be shared with the team
+      through version control?
+    options:
+      A: The user-level MCP config in the home directory.
+      B: A .env file alongside the project.
+      C: The project .mcp.json file.
+      D: The local settings file ignored by git.
+    answer: C
+    why:
+      A: User-level configuration is personal to one machine.
+      B: Environment files hold secrets and are not committed.
+      C: Project .mcp.json is the shared, versioned place for server definitions.
+      D: An ignored local file is by definition not shared.
+  - id: q-2.4-c
+    task: "2.4"
+    level: 2
+    scenario: Developer Productivity
+    stem: >-
+      A shared .mcp.json needs an API token for one server. How should it be
+      written?
+    options:
+      A: Paste the token and restrict repository access to the team.
+      B: Keep the token in a comment so tooling ignores it.
+      C: Base64-encode the token before committing it.
+      D: Reference the value through environment variable expansion so the committed file holds no secret.
+    answer: D
+    why:
+      A: A committed token is a committed token, whatever the repository permissions.
+      B: Comments are stored in the file exactly like values.
+      C: Encoding is not encryption and is trivially reversed.
+      D: Expansion keeps the config shareable and the secret out of git.
+  - id: q-2.4-d
+    task: "2.4"
+    level: 3
+    scenario: Developer Productivity
+    stem: >-
+      An agent makes six exploratory calls each session just to learn what
+      product categories exist before it can query anything useful. What removes
+      that overhead?
+    options:
+      A: Expose the catalog as an MCP resource the agent can read directly.
+      B: Cache the category list in the agent's system prompt and update it manually.
+      C: Give the agent a larger context window so the exploration costs less.
+      D: Increase the per-call result limit so fewer calls are needed.
+    answer: A
+    why:
+      A: Resources are for reference data, which is exactly what removes exploratory calls.
+      B: A hand-maintained prompt copy goes stale and must be edited on every change.
+      C: A bigger window pays for the exploration instead of avoiding it.
+      D: Fewer, larger calls are still exploratory calls.
+  - id: q-2.4-e
+    task: "2.4"
+    level: 3
+    scenario: Developer Productivity
+    stem: >-
+      A team is about to build a custom MCP server to read GitHub issues. What
+      should be checked first?
+    options:
+      A: Whether the team has capacity to maintain a server long term.
+      B: Whether a maintained community server already covers it, since custom servers are for team-specific workflows.
+      C: Whether the server can be written in the same language as the main app.
+      D: Whether the server can be committed to the same repository.
+    answer: B
+    why:
+      A: Capacity matters, but the first question is whether the work is needed at all.
+      B: Preferring community servers and building only for team-specific workflows is the rule.
+      C: Language choice is irrelevant to whether the server should exist.
+      D: Repository layout is a detail, not a build-or-reuse decision.
+  - id: q-2.5-b
+    task: "2.5"
+    level: 1
+    scenario: Developer Productivity
+    stem: >-
+      Which built-in tool searches inside file contents rather than matching
+      file paths?
+    options:
+      A: Glob
+      B: Read
+      C: Grep
+      D: Edit
+    answer: C
+    why:
+      A: Glob matches paths by pattern.
+      B: Read returns one file you already know about.
+      C: Grep searches contents.
+      D: Edit modifies a file.
+  - id: q-2.5-c
+    task: "2.5"
+    level: 2
+    scenario: Developer Productivity
+    stem: >-
+      You need every call site of a function named applyDiscount across an
+      unfamiliar repository. What is the right first move?
+    options:
+      A: Glob for files likely to use it, then read each one.
+      B: Edit the function to add a log line and run the test suite.
+      C: Read the whole codebase so nothing is missed.
+      D: Grep for applyDiscount, then Read the files that matched to follow the imports.
+    answer: D
+    why:
+      A: Glob matches paths, so it cannot find callers by name.
+      B: Instrumenting and running tests finds only covered call sites.
+      C: Reading everything up front is the trap this task names.
+      D: Grep locates occurrences and Read follows only what matched.
+  - id: q-2.5-d
+    task: "2.5"
+    level: 3
+    scenario: Developer Productivity
+    stem: >-
+      An Edit fails because its anchor text appears four times in the file. What
+      is the correct response?
+    options:
+      A: Widen the anchor with surrounding lines so it is unique, and fall back to Read plus Write if no unique anchor exists.
+      B: Retry the same Edit until it happens to apply.
+      C: Delete the file and write it again from memory.
+      D: Apply the edit four times so every occurrence is covered.
+    answer: A
+    why:
+      A: Edit needs a unique anchor; Read plus Write is the documented fallback.
+      B: A non-unique anchor fails deterministically, so retrying changes nothing.
+      C: Rewriting from memory risks losing content that was never read.
+      D: That changes three places that were not meant to change.
+  - id: q-2.5-e
+    task: "2.5"
+    level: 3
+    scenario: Developer Productivity
+    stem: >-
+      A reviewer insists the agent read all 300 files before starting, to avoid
+      missing context. Why is this the wrong default?
+    options:
+      A: Reading files is slower than searching them.
+      B: It spends the context budget on files that are irrelevant to the change, diluting attention and crowding out the files that matter.
+      C: Read can only open one file per session.
+      D: The agent cannot search a file it has already read.
+    answer: B
+    why:
+      A: Speed is a secondary concern next to what fills the context.
+      B: Targeted discovery keeps the context on the code that is actually involved.
+      C: Read has no such limit.
+      D: Reading does not prevent searching.
+
+# ---------------------------------------------------------------------------
+# D3 Claude Code Configuration & Workflows
+# ---------------------------------------------------------------------------
+  - id: q-3.1-b
+    task: "3.1"
+    level: 1
+    scenario: Developer Productivity
+    stem: >-
+      Which CLAUDE.md location is shared with the whole team through the
+      repository?
+    options:
+      A: The user-level file in the home directory.
+      B: A file inside the local settings directory that git ignores.
+      C: The project-level file at the repository root.
+      D: The directory-level file, which applies only in its own folder.
+    answer: C
+    why:
+      A: User-level config is personal to one machine.
+      B: An ignored file reaches nobody else.
+      C: The project-level file is committed and therefore shared.
+      D: Directory-level config is shared but scoped to that folder, not the team standard.
+  - id: q-3.1-c
+    task: "3.1"
+    level: 2
+    scenario: Developer Productivity
+    stem: >-
+      A convention works perfectly for you and is ignored on every teammate's
+      machine. Where should you look first?
+    options:
+      A: The repository history, to check whether someone reverted it.
+      B: The permissions file, which may be blocking the tool.
+      C: The MCP server list, which may be missing on their machines.
+      D: Your user-level CLAUDE.md, because an instruction that only you have is usually personal config.
+    answer: D
+    why:
+      A: A revert would have affected you too.
+      B: A blocked tool fails loudly rather than silently ignoring a convention.
+      C: MCP servers do not carry conventions.
+      D: Working-for-me-only is the signature of an instruction in user-level config.
+  - id: q-3.1-d
+    task: "3.1"
+    level: 2
+    scenario: Developer Productivity
+    stem: >-
+      You want to confirm which instruction files are actually loaded in the
+      current session. What do you use?
+    options:
+      A: The /memory command, which lists the loaded instruction files.
+      B: Read each candidate CLAUDE.md and compare by hand.
+      C: The settings file, which lists them in load order.
+      D: Start a new session and watch which files are opened.
+    answer: A
+    why:
+      A: /memory reports the loaded set directly.
+      B: Reading files tells you what exists, not what is loaded.
+      C: Settings configure behaviour and do not enumerate loaded memory files.
+      D: Loading is not visible as file-open activity.
+  - id: q-3.1-e
+    task: "3.1"
+    level: 3
+    scenario: Developer Productivity
+    stem: >-
+      A 400-line project CLAUDE.md mixes coding standards, release steps and
+      three subsystem quirks. Every session pays for all of it. What is the
+      right restructuring?
+    options:
+      A: Shorten each section until the file fits a budget.
+      B: Keep the always-true standards in CLAUDE.md, move subsystem detail into path-scoped rules, and move procedures into skills so they load on demand.
+      C: Split it into one CLAUDE.md per directory.
+      D: Move the whole file to user-level config so only those who want it pay.
+    answer: B
+    why:
+      A: Trimming loses content without changing what is always loaded.
+      B: Always-on, path-scoped and on-demand are three different load behaviours, and each part belongs in the one that matches it.
+      C: Per-directory files duplicate cross-cutting content and still load eagerly where they match.
+      D: User-level config stops the team from sharing the standards at all.
+  - id: q-3.2-b
+    task: "3.2"
+    level: 1
+    scenario: Developer Productivity
+    stem: >-
+      What is the key behavioural difference between a skill and CLAUDE.md?
+    options:
+      A: Skills can call tools; CLAUDE.md cannot.
+      B: Skills are personal; CLAUDE.md is shared.
+      C: CLAUDE.md is always loaded, while a skill loads on demand when it is invoked or matched.
+      D: CLAUDE.md supports arguments; skills do not.
+    answer: C
+    why:
+      A: Both describe behaviour; neither executes tools by itself.
+      B: Both exist at user and project level.
+      C: Always-on versus on-demand is the distinction that decides where content belongs.
+      D: Skills are the ones with an argument hint.
+  - id: q-3.2-c
+    task: "3.2"
+    level: 2
+    scenario: Developer Productivity
+    stem: >-
+      A six-step release procedure is used twice a month and currently sits in
+      the project CLAUDE.md. What should happen to it?
+    options:
+      A: Leave it, since a shared procedure belongs in shared config.
+      B: Move it into user-level config for whoever runs releases.
+      C: Move it into a path-scoped rule keyed to the release directory.
+      D: Move it into a project skill, so it loads only on the two days a month it is needed.
+    answer: D
+    why:
+      A: An occasional procedure in always-on config taxes every unrelated session.
+      B: User-level config stops the rest of the team from running it.
+      C: A release is not triggered by editing a particular file.
+      D: Task procedures are the canonical case for an on-demand skill.
+  - id: q-3.2-d
+    task: "3.2"
+    level: 3
+    scenario: Developer Productivity
+    stem: >-
+      A skill runs a dependency audit that prints 900 lines of tool output, and
+      the main conversation is left unusable afterwards. Which frontmatter
+      setting addresses this?
+    options:
+      A: Context fork, so the verbose work happens in a separate context and only the result returns.
+      B: An allowed-tools list restricting it to the audit command.
+      C: An argument hint describing the package to audit.
+      D: Moving the skill to user level so it is invoked less often.
+    answer: A
+    why:
+      A: Forking the context keeps the noise out of the main conversation.
+      B: Restricting tools limits what it can do, not how much output returns.
+      C: An argument hint is documentation for the caller.
+      D: Where it lives does not change what it prints.
+  - id: q-3.2-e
+    task: "3.2"
+    level: 3
+    scenario: Developer Productivity
+    stem: >-
+      A team has a universal rule that all money values use integer minor units.
+      Someone proposes shipping it as a skill. Assess this.
+    options:
+      A: Correct — skills are the project-scoped place for team standards.
+      B: Wrong — a universal invariant must be always-on, so it belongs in CLAUDE.md; skills are for procedures invoked when needed.
+      C: Correct, provided the skill declares allowed-tools.
+      D: Wrong — it belongs in user-level config so each developer can opt in.
+    answer: B
+    why:
+      A: Skills are project-scoped but on-demand, which is the wrong load behaviour here.
+      B: A rule that must hold on every edit cannot depend on someone remembering to invoke it.
+      C: Tool permissions do not change when the content loads.
+      D: Opt-in defeats the purpose of a team invariant.
+  - id: q-3.3-b
+    task: "3.3"
+    level: 1
+    scenario: Developer Productivity
+    stem: >-
+      What determines when a file in the rules directory is loaded?
+    options:
+      A: Alphabetical order, until the context budget is reached.
+      B: Whether the user invokes it by name.
+      C: Its paths glob, which loads the rule when a matching file is edited.
+      D: Its position in the settings file.
+    answer: C
+    why:
+      A: Rules are not loaded by name order.
+      B: Invoking by name is how skills work.
+      C: A paths glob scopes the rule to the files it concerns.
+      D: Settings do not order rule loading.
+  - id: q-3.3-c
+    task: "3.3"
+    level: 2
+    scenario: Developer Productivity
+    stem: >-
+      Test-file conventions need to apply to test files scattered across twenty
+      directories. What is the cleanest mechanism?
+    options:
+      A: A CLAUDE.md in each of the twenty directories.
+      B: A skill the author invokes before writing tests.
+      C: The conventions in the project CLAUDE.md, always loaded.
+      D: One rule file with a recursive glob matching the test filename pattern.
+    answer: D
+    why:
+      A: Twenty copies of one convention is twenty places to update.
+      B: An invoked skill is skipped exactly when someone forgets.
+      C: Always-on loading makes every unrelated session pay for test conventions.
+      D: A recursive glob matches the pattern wherever it appears, in one file.
+  - id: q-3.3-d
+    task: "3.3"
+    level: 3
+    scenario: Developer Productivity
+    stem: >-
+      A rule is correctly globbed to the migrations directory but never seems to
+      apply when the agent writes a migration. What should be checked?
+    options:
+      A: Whether the files being edited actually match the glob, since scoped rules load only on a match.
+      B: Whether the rule file is listed in the project CLAUDE.md.
+      C: Whether the rule exceeds the size at which rules are skipped.
+      D: Whether the agent has permission to read the rules directory.
+    answer: A
+    why:
+      A: A near-miss glob is the common cause of a scoped rule that never fires.
+      B: Rules are discovered by their own glob, not by a CLAUDE.md listing.
+      C: There is no such size-based skipping to check.
+      D: A permission problem would fail visibly rather than silently.
+  - id: q-3.3-e
+    task: "3.3"
+    level: 3
+    scenario: Developer Productivity
+    stem: >-
+      Why is scoping rules by path a context decision rather than only an
+      organisational one?
+    options:
+      A: Because narrower files are easier for humans to review.
+      B: Because an always-loaded rule spends context on every session, while a scoped rule spends it only in sessions that touch the matching files.
+      C: Because globs let several rules load at once.
+      D: Because rules loaded later override earlier ones.
+    answer: B
+    why:
+      A: Readability is a side benefit, not the mechanism.
+      B: Scoped loading is how instruction weight is kept proportional to relevance.
+      C: Loading several rules is possible but is not the reason to scope.
+      D: Override order is not what scoping buys.
+  - id: q-3.4-b
+    task: "3.4"
+    level: 1
+    scenario: Developer Productivity
+    stem: >-
+      Which situation calls for plan mode rather than direct execution?
+    options:
+      A: Adding a missing null check in one function.
+      B: Fixing a typo in a README.
+      C: Migrating an authentication approach across 45 files.
+      D: Renaming one local variable.
+    answer: C
+    why:
+      A: A one-line guard does not need a design round.
+      B: A typo has no design space.
+      C: Large multi-file architectural work is what planning is for.
+      D: A local rename is a clear, contained change.
+  - id: q-3.4-c
+    task: "3.4"
+    level: 2
+    scenario: Developer Productivity
+    stem: >-
+      Discovery for a refactor requires grepping and skimming forty files, and
+      that noise would crowd out the design work. What helps?
+    options:
+      A: Raise the context limit and read everything in the main session.
+      B: Skip discovery and plan from the file names.
+      C: Compact the session after reading each file.
+      D: Send discovery to an Explore subagent, so only its conclusions return to the planning context.
+    answer: D
+    why:
+      A: A bigger window still fills with excerpts instead of design.
+      B: Planning without discovery produces a plan for the wrong code.
+      C: Repeated compaction loses detail unpredictably mid-discovery.
+      D: Isolating discovery keeps the excerpts out and the conclusions in.
+  - id: q-3.4-d
+    task: "3.4"
+    level: 3
+    scenario: Developer Productivity
+    stem: >-
+      A plan has been approved. What is the correct execution pattern?
+    options:
+      A: Execute directly against the approved plan, and only re-plan if a finding invalidates it.
+      B: Stay in plan mode and re-plan after each file so the plan stays current.
+      C: Start a fresh session with no memory of the plan, to avoid bias.
+      D: Have a second instance re-derive the plan before any edits.
+    answer: A
+    why:
+      A: Plan to design, then execute directly, re-planning only on a genuine invalidation.
+      B: Re-planning per file turns design into overhead and never converges.
+      C: Discarding the approved plan wastes the work that produced it.
+      D: A second derivation is redundant once the plan is approved.
+  - id: q-3.4-e
+    task: "3.4"
+    level: 3
+    scenario: Developer Productivity
+    stem: >-
+      A director asks why engineers should not simply plan everything, given
+      that planning is cheap insurance. What is the honest answer?
+    options:
+      A: Planning consumes the context budget that execution needs.
+      B: Planning pays off where there are real choices to make; on a clear small change it adds a review cycle and a document without changing the outcome.
+      C: Plan mode cannot edit files, so nothing would ever ship.
+      D: Plans go stale, so they are only valid for the session that wrote them.
+    answer: B
+    why:
+      A: Cost is real but secondary to whether there is a decision to make.
+      B: The deciding factor is whether the work has design space, not its risk in the abstract.
+      C: Plan mode is followed by execution, so work does ship.
+      D: Staleness is a reason to execute promptly, not a reason never to plan.
+  - id: q-3.5-b
+    task: "3.5"
+    level: 1
+    scenario: Code Generation
+    stem: >-
+      Output keeps missing the mark after three prose rewrites of the
+      instruction. What is the better next step?
+    options:
+      A: Reword the instruction once more, more firmly.
+      B: Shorten the instruction so it is easier to follow.
+      C: Give a concrete input and the exact output wanted for it.
+      D: Repeat the instruction at the start and the end.
+    answer: C
+    why:
+      A: A fourth rewording is the trap this task names.
+      B: Brevity does not supply the missing specificity.
+      C: A concrete input and expected output removes the interpretation gap prose leaves.
+      D: Repetition restates the same ambiguity twice.
+  - id: q-3.5-c
+    task: "3.5"
+    level: 2
+    scenario: Code Generation
+    stem: >-
+      Three issues in generated code are independent of one another. How should
+      the feedback be delivered?
+    options:
+      A: One at a time, verifying after each, so each fix is attributable.
+      B: As a rewritten specification covering all three implicitly.
+      C: Only the most severe, and re-check whether the others persist.
+      D: All three at once, since independent fixes cannot interfere.
+    answer: D
+    why:
+      A: Sequencing independent fixes pays three round trips for no information.
+      B: An implicit rewrite hides which problems were being addressed.
+      C: Deferring known issues invites a second pass that was avoidable.
+      D: Independent fixes batch safely; it is interacting fixes that need sequencing.
+  - id: q-3.5-d
+    task: "3.5"
+    level: 3
+    scenario: Code Generation
+    stem: >-
+      Two fixes interact: one changes a function's return type and the other
+      changes how its callers handle errors. What is the right delivery?
+    options:
+      A: Sequence them, verifying the first before asking for the second, since the second depends on the shape the first produces.
+      B: Batch them, because both touch the same function.
+      C: Ask for both in one message but request separate commits.
+      D: Ask a second instance to apply one while the first applies the other.
+    answer: A
+    why:
+      A: When one fix changes what the other operates on, order carries information.
+      B: Touching the same code is exactly why batching is unsafe here.
+      C: Commit hygiene does not resolve the dependency between the changes.
+      D: Concurrent edits to the same function conflict.
+  - id: q-3.5-e
+    task: "3.5"
+    level: 3
+    scenario: Code Generation
+    stem: >-
+      Work is starting in a domain nobody on the team knows well, and
+      requirements are still vague. Which refinement pattern fits?
+    options:
+      A: Write the most detailed specification possible up front, then execute.
+      B: Use the interview pattern — have the agent ask clarifying questions until the requirements are pinned down, then execute.
+      C: Generate three candidate implementations and keep whichever reads best.
+      D: Copy the structure of a similar project and adapt it.
+    answer: B
+    why:
+      A: A detailed specification written from vague understanding encodes the wrong assumptions.
+      B: Interviewing surfaces the unknowns before they are baked into a specification.
+      C: Choosing by readability selects style rather than correctness.
+      D: Borrowed structure imports assumptions from a different problem.
+  - id: q-3.6-b
+    task: "3.6"
+    level: 1
+    scenario: CI/CD
+    stem: >-
+      Which invocation is appropriate for a non-interactive CI job?
+    options:
+      A: The interactive session, with the job's input piped in.
+      B: Plan mode, so the job records what it would do.
+      C: The print flag, which runs a single non-interactive request and exits.
+      D: A resumed session from the previous build.
+    answer: C
+    why:
+      A: An interactive session in CI is the classic job that hangs waiting for input.
+      B: Plan mode still expects an approval step.
+      C: The print flag is the non-interactive mode CI needs.
+      D: Resuming couples each build to the last build's context.
+  - id: q-3.6-c
+    task: "3.6"
+    level: 2
+    scenario: CI/CD
+    stem: >-
+      A CI gate needs to fail the build when any high-severity finding appears.
+      What output format makes that reliable?
+    options:
+      A: Markdown, parsed with a regular expression for severity headings.
+      B: The raw transcript, archived for a human to read.
+      C: Plain text, with the job searching for the word critical.
+      D: JSON output constrained by a schema, so the gate reads fields rather than prose.
+    answer: D
+    why:
+      A: Regular expressions over prose break on the next formatting change.
+      B: An archive is evidence, not a gate.
+      C: Keyword searching misses rephrasings and matches quoted text.
+      D: A schema-constrained payload is what makes a gate deterministic.
+  - id: q-3.6-d
+    task: "3.6"
+    level: 3
+    scenario: CI/CD
+    stem: >-
+      A review job reports the same twelve pre-existing findings on every pull
+      request, and developers have stopped reading it. What is the fix?
+    options:
+      A: Feed the previously reported findings into the job and ask only for issues new to this change.
+      B: Raise the severity threshold until the list is short.
+      C: Run the job nightly rather than per pull request.
+      D: Have the job comment only on files touched by the pull request.
+    answer: A
+    why:
+      A: Passing prior findings back makes the output incremental, which is what restores trust.
+      B: A higher threshold hides new findings along with old ones.
+      C: Nightly runs delay feedback and still repeat the same list.
+      D: File scoping helps, but a pre-existing issue in a touched file still repeats.
+  - id: q-3.6-e
+    task: "3.6"
+    level: 3
+    scenario: CI/CD
+    stem: >-
+      The same session that generated a change is asked to review it, and it
+      approves everything. What is the structural problem?
+    options:
+      A: The session has run out of context and is summarising.
+      B: A session reviewing its own work shares the assumptions that produced the defect, so an independent instance is needed.
+      C: Review requires a different model, not a different session.
+      D: The review prompt was not specific enough about severity levels.
+    answer: B
+    why:
+      A: Context pressure is a separate problem from self-review bias.
+      B: Independence is the whole point, because the reviewer must not share the generator's assumptions.
+      C: A fresh instance of the same model is sufficient; the issue is shared context.
+      D: Better severity wording does not remove the bias.
+
+# ---------------------------------------------------------------------------
+# D4 Prompt Engineering & Structured Output
+# ---------------------------------------------------------------------------
+  - id: q-4.1-b
+    task: "4.1"
+    level: 1
+    scenario: Code Generation
+    stem: >-
+      Which instruction gives a review agent usable criteria?
+    options:
+      A: Be conservative and only report things that really matter.
+      B: Use your best judgement about severity.
+      C: Report unhandled promise rejections and missing input validation on request handlers; skip formatting and naming.
+      D: Report anything a senior engineer would comment on.
+    answer: C
+    why:
+      A: Conservative is a disposition, not a criterion anyone can apply twice the same way.
+      B: Judgement without criteria is the problem being solved.
+      C: Naming what to report and what to skip is what makes output consistent.
+      D: It defers the definition to an imagined person.
+  - id: q-4.1-c
+    task: "4.1"
+    level: 2
+    scenario: Code Generation
+    stem: >-
+      One finding category produces so many false positives that developers now
+      ignore all categories. What is the immediate move?
+    options:
+      A: Add a confidence threshold so only high-confidence findings in that category surface.
+      B: Lower the severity of that category so it sorts to the bottom.
+      C: Keep it enabled and add a note explaining that the category is noisy.
+      D: Disable that category while its criteria are rewritten, so the remaining categories regain trust.
+    answer: D
+    why:
+      A: A threshold suppresses volume without fixing the criteria that misfire.
+      B: Reordering still leaves the wrong findings in the report.
+      C: A disclaimer does not stop the noise being read first.
+      D: False positives in one category destroy trust in all of them, so it comes out until it is fixed.
+  - id: q-4.1-d
+    task: "4.1"
+    level: 3
+    scenario: Code Generation
+    stem: >-
+      A severity scale defines high, medium and low in words only, and two
+      reviewers grade the same issue differently. What closes the gap?
+    options:
+      A: Give a short code example of a typical issue at each severity, so the boundary is shown rather than described.
+      B: Reduce the scale to two levels so there is less room to disagree.
+      C: Add a tie-break rule that the higher severity wins.
+      D: Have a third reviewer arbitrate disagreements.
+    answer: A
+    why:
+      A: Examples per severity anchor the boundary where prose cannot.
+      B: Fewer buckets move the ambiguity rather than removing it.
+      C: Always rounding up inflates severity and still does not define it.
+      D: Arbitration handles each case again instead of fixing the definition.
+  - id: q-4.1-e
+    task: "4.1"
+    level: 3
+    scenario: Code Generation
+    stem: >-
+      A director asks why a confidence threshold is not the right first answer
+      to a false-positive problem. What is the reasoning?
+    options:
+      A: Confidence scores are expensive to compute on every finding.
+      B: Self-reported confidence does not reliably track correctness, so thresholding hides both wrong findings and right ones without improving the criteria.
+      C: Thresholds cannot be applied per category.
+      D: Developers cannot see the threshold, so they distrust it.
+    answer: B
+    why:
+      A: Cost is not the objection.
+      B: The criteria are what misfire; a threshold only changes how much of the misfire is shown.
+      C: Per-category thresholds are perfectly possible.
+      D: Visibility is a presentation concern, not the defect.
+  - id: q-4.2-b
+    task: "4.2"
+    level: 1
+    scenario: Structured Extraction
+    stem: >-
+      How many few-shot examples are usually appropriate for teaching a
+      judgement call?
+    options:
+      A: One, so the model is not over-constrained.
+      B: As many as the context window allows.
+      C: Two to four targeted examples of genuinely ambiguous cases.
+      D: None, because instructions are more reliable than examples.
+    answer: C
+    why:
+      A: One example reads as a special case rather than a pattern.
+      B: Volume dilutes attention and buys little past the first few.
+      C: A small number of well-chosen ambiguous cases is what shifts judgement.
+      D: Instructions are what fail when the problem is judgement.
+  - id: q-4.2-c
+    task: "4.2"
+    level: 2
+    scenario: Structured Extraction
+    stem: >-
+      What should accompany each few-shot example so it teaches rather than just
+      demonstrates?
+    options:
+      A: The confidence score the model should assign.
+      B: The name of the reviewer who approved the example.
+      C: A count of how often this case appears in production.
+      D: The reasoning for why that action was chosen for that input.
+    answer: D
+    why:
+      A: A score without the reasoning is another unexplained output.
+      B: Provenance is audit metadata, not instruction.
+      C: Frequency is useful for prioritising examples, not for applying them.
+      D: The reasoning is what generalises to cases not in the examples.
+  - id: q-4.2-d
+    task: "4.2"
+    level: 3
+    scenario: Structured Extraction
+    stem: >-
+      Extraction returns empty fields for invoices from three vendors whose
+      layouts differ from the examples given. What is the fix?
+    options:
+      A: Add examples covering the varied document structures, so the pattern is taught across layouts rather than one.
+      B: Add more instructions describing where fields usually appear.
+      C: Lower the temperature so output is more consistent.
+      D: Mark the fields as required so they cannot come back empty.
+    answer: A
+    why:
+      A: Structural variety in the examples is what stops layout-specific failure.
+      B: More prose about typical layouts does not cover the atypical ones.
+      C: Consistency does not help if the model cannot locate the field.
+      D: Forcing a value invites a fabricated one.
+  - id: q-4.2-e
+    task: "4.2"
+    level: 3
+    scenario: Structured Extraction
+    stem: >-
+      Output is already correctly formatted but the model keeps classifying
+      borderline cases inconsistently. Adding a fifth paragraph of instructions
+      changed nothing. Why?
+    options:
+      A: The instructions exceeded the length the model attends to.
+      B: The problem is inconsistent judgement on ambiguous input, which examples address and more instructions do not.
+      C: The schema is missing an enum for the borderline class.
+      D: The temperature is too high for classification work.
+    answer: B
+    why:
+      A: Length is not what makes the instruction ineffective here.
+      B: Instructions describe the rule; examples demonstrate where the line falls.
+      C: A missing enum would produce invalid values, not inconsistent ones.
+      D: Temperature adds variance but does not define the boundary.
+  - id: q-4.3-b
+    task: "4.3"
+    level: 1
+    scenario: Structured Extraction
+    stem: >-
+      What does a JSON schema on a tool_use call guarantee?
+    options:
+      A: That the extracted values are factually correct.
+      B: That no field will be left empty.
+      C: That the output is syntactically valid and matches the declared shape.
+      D: That the model read the whole document.
+    answer: C
+    why:
+      A: Semantics are not enforced by a shape constraint.
+      B: Nullable and optional fields may legitimately be empty.
+      C: Schemas remove syntax and shape errors, which is their whole job.
+      D: The schema says nothing about what was read.
+  - id: q-4.3-c
+    task: "4.3"
+    level: 2
+    scenario: Structured Extraction
+    stem: >-
+      A purchase order number is genuinely absent from some documents, yet the
+      model invents plausible ones. What schema change helps?
+    options:
+      A: Make the field required with a pattern constraint.
+      B: Add a second field for the model's confidence in the number.
+      C: Add a description telling the model not to guess.
+      D: Make the field nullable, so absent is an expressible answer.
+    answer: D
+    why:
+      A: Requiring it forces the model to produce something, which is the fabrication.
+      B: A confidence score does not stop the invented value being returned.
+      C: A description competes with a schema that demands a value.
+      D: Fabrication happens when the schema has no way to say not present.
+  - id: q-4.3-d
+    task: "4.3"
+    level: 3
+    scenario: Structured Extraction
+    stem: >-
+      A document type enum covers six known types, and the seventh kind of
+      document arrives. What design avoids silent misclassification?
+    options:
+      A: Include an unclear or other member plus a free-text detail field, so unknown input is reported rather than forced into a known bucket.
+      B: Expand the enum whenever a new type appears in production.
+      C: Remove the enum and accept any string.
+      D: Reject documents that do not match a known type.
+    answer: A
+    why:
+      A: An explicit escape hatch with detail turns an unknown into a signal instead of a wrong label.
+      B: Reacting after each surprise means every new type is misclassified once.
+      C: A free string loses the validation the enum provides for known types.
+      D: Rejecting loses documents the business still needs processed.
+  - id: q-4.3-e
+    task: "4.3"
+    level: 3
+    scenario: Structured Extraction
+    stem: >-
+      Schema validation passes on 100 percent of extractions, and the team
+      reports the pipeline as reliable. What is wrong with that claim?
+    options:
+      A: Nothing, provided the schema covers every field.
+      B: Validation proves the shape is right, not the values; a well-formed wrong total still validates.
+      C: Validation rates are only meaningful above a sample size of 1000.
+      D: Validation is performed client side and can be bypassed.
+    answer: B
+    why:
+      A: Field coverage still says nothing about correctness of values.
+      B: Syntactic success is routinely mistaken for semantic success, and they are different claims.
+      C: Sample size is not what makes the claim wrong.
+      D: Where validation runs does not change what it measures.
+  - id: q-4.4-b
+    task: "4.4"
+    level: 1
+    scenario: Structured Extraction
+    stem: >-
+      What should a validation-retry request include?
+    options:
+      A: Only the original document, so the model starts clean.
+      B: Only the failed output, to save tokens.
+      C: The document, the output that failed and the specific validation error.
+      D: The document and an instruction to try harder.
+    answer: C
+    why:
+      A: Starting clean discards the information about what went wrong.
+      B: Without the document the model cannot re-derive the right value.
+      C: The specific error is what turns a retry into a correction.
+      D: Try harder gives the model nothing actionable.
+  - id: q-4.4-c
+    task: "4.4"
+    level: 2
+    scenario: Structured Extraction
+    stem: >-
+      A required tax identifier is simply not printed on the invoice. The retry
+      loop runs three times and then fails. What is the real problem?
+    options:
+      A: The retry limit is too low for this document type.
+      B: The schema should mark the field as a string rather than a pattern.
+      C: The validation error message is not specific enough.
+      D: Retries fix format problems, not missing source data, so this should be reported as absent rather than retried.
+    answer: D
+    why:
+      A: No number of retries can produce information the document does not contain.
+      B: The type is not what makes the value unobtainable.
+      C: A clearer message does not conjure the identifier.
+      D: Retrying for absent data is the trap; the correct output is an explicit absence.
+  - id: q-4.4-d
+    task: "4.4"
+    level: 3
+    scenario: Structured Extraction
+    stem: >-
+      Invoices occasionally carry a stated total that does not equal the sum of
+      line items. How should the schema surface this?
+    options:
+      A: Extract calculated_total alongside stated_total so a discrepancy is visible in the data rather than inferred later.
+      B: Return the stated total and log a warning when it looks wrong.
+      C: Return whichever total is larger, as the safer figure.
+      D: Reject the document for manual entry.
+    answer: A
+    why:
+      A: Capturing both values makes the discrepancy a first-class, queryable fact.
+      B: A log line is not part of the record downstream systems read.
+      C: Picking a number silently resolves a conflict that a human should see.
+      D: Rejecting every arithmetic mismatch sends routine documents to manual work.
+  - id: q-4.4-e
+    task: "4.4"
+    level: 3
+    scenario: Code Generation
+    stem: >-
+      A review pipeline dismisses many findings, and the team wants to learn
+      from them rather than only count them. What field helps?
+    options:
+      A: A free-text note from whoever dismissed the finding.
+      B: A detected_pattern field on each finding, so dismissed findings can be grouped and the criteria that generated them revised.
+      C: A timestamp, so dismissal rates can be tracked over time.
+      D: A severity override, so dismissed findings are downgraded automatically.
+    answer: B
+    why:
+      A: Free text does not aggregate into a pattern anyone can act on.
+      B: Naming the pattern is what makes a pile of dismissals into a criteria fix.
+      C: A rate shows that something is wrong without showing what.
+      D: Automatic downgrading hides the category instead of correcting it.
+  - id: q-4.5-b
+    task: "4.5"
+    level: 1
+    scenario: Structured Extraction
+    stem: >-
+      Which is a documented property of the Batch API?
+    options:
+      A: It guarantees completion within five minutes.
+      B: It supports multi-turn tool calling.
+      C: It costs roughly half as much, with results returned within 24 hours and no latency guarantee.
+      D: It returns results in submission order without any correlation identifier.
+    answer: C
+    why:
+      A: There is no latency SLA, which is the trade being made.
+      B: Multi-turn tool calling is not available in batch.
+      C: Half cost, up to 24 hours and no latency guarantee is the shape of the deal.
+      D: Results are correlated by custom_id rather than by order.
+  - id: q-4.5-c
+    task: "4.5"
+    level: 2
+    scenario: Structured Extraction
+    stem: >-
+      A batch of 5000 documents returns with 180 failures. What should be
+      resubmitted?
+    options:
+      A: The whole batch, so the run is consistent.
+      B: Nothing, until the prompt has been rewritten.
+      C: The 180 failures plus a random sample of successes as a control.
+      D: Only the 180 failures, matched back by their custom_id.
+    answer: D
+    why:
+      A: Re-running 4820 successful documents pays twice for work already done.
+      B: A rewrite may be warranted, but the failures still need processing.
+      C: A control sample is for prompt tuning, not for recovering failures.
+      D: custom_id exists precisely so failures can be identified and resubmitted alone.
+  - id: q-4.5-d
+    task: "4.5"
+    level: 3
+    scenario: CI/CD
+    stem: >-
+      Someone proposes moving the pre-merge review job to the Batch API to halve
+      its cost. Assess this.
+    options:
+      A: Wrong — a pre-merge gate blocks a developer, and a job with no latency guarantee could hold the merge for hours.
+      B: Sound — review findings are not time-critical.
+      C: Sound, provided the batch is submitted when the branch is created.
+      D: Wrong — batch cannot process source code.
+    answer: A
+    why:
+      A: Blocking work needs synchronous calls; batch suits overnight and weekly jobs.
+      B: A blocked merge is time-critical by definition.
+      C: Early submission cannot cover commits made after it was submitted.
+      D: Batch has no such content restriction.
+  - id: q-4.5-e
+    task: "4.5"
+    level: 3
+    scenario: Structured Extraction
+    stem: >-
+      A 40000-document overnight extraction is about to be submitted for the
+      first time. What should happen before it is?
+    options:
+      A: Split it into four batches so partial failure is cheaper.
+      B: Tune the prompt on a small representative sample, so a systematic flaw is not multiplied by 40000.
+      C: Raise the retry limit so transient failures are absorbed.
+      D: Submit it twice and compare, to measure variance.
+    answer: B
+    why:
+      A: Splitting limits blast radius without catching the flaw first.
+      B: A sample run is the cheap place to discover a systematic prompt problem.
+      C: Retries do not help when every document is processed wrongly.
+      D: Paying twice to measure variance costs more than sampling.
+  - id: q-4.6-b
+    task: "4.6"
+    level: 1
+    scenario: Code Generation
+    stem: >-
+      Why does an independent instance catch more than self-review?
+    options:
+      A: It is given a longer context window.
+      B: It uses a newer model version.
+      C: It does not share the assumptions that produced the code, so blind spots are not inherited.
+      D: It reviews more slowly and therefore more carefully.
+    answer: C
+    why:
+      A: Window size is not what creates independence.
+      B: A different version may help, but the mechanism is fresh context.
+      C: Independence of assumptions is exactly what makes the second look valuable.
+      D: Speed is not the differentiator.
+  - id: q-4.6-c
+    task: "4.6"
+    level: 2
+    scenario: Code Generation
+    stem: >-
+      Per-file review passes are in place. What does adding an integration pass
+      buy?
+    options:
+      A: A second opinion on each file, raising confidence per file.
+      B: Consistent severity grading across files.
+      C: A shorter total runtime, because the integration pass replaces some file passes.
+      D: Coverage of defects that live between files, such as a contract mismatch across a module boundary.
+    answer: D
+    why:
+      A: A repeat per-file pass is not what an integration pass does.
+      B: Grading consistency comes from criteria, not from a further pass.
+      C: It adds work rather than replacing it.
+      D: Cross-file data flow is invisible to any single-file pass.
+  - id: q-4.6-d
+    task: "4.6"
+    level: 3
+    scenario: Structured Extraction
+    stem: >-
+      Reviewer capacity covers about 8 percent of output. How should findings be
+      routed to them?
+    options:
+      A: By confidence, sending the lowest-confidence findings to humans, with thresholds calibrated on labelled data.
+      B: Randomly, so the sample stays unbiased.
+      C: By severity alone, sending every high-severity finding.
+      D: By age, oldest first, so nothing waits indefinitely.
+    answer: A
+    why:
+      A: Scarce review is worth most where the model is least sure, and the threshold must be calibrated rather than guessed.
+      B: A random sample measures quality but wastes scarce capacity on easy cases.
+      C: A confident high-severity finding may need less human time than an uncertain one.
+      D: Queue age is a fairness rule, not a value-of-review rule.
+  - id: q-4.6-e
+    task: "4.6"
+    level: 3
+    scenario: Structured Extraction
+    stem: >-
+      A confidence threshold of 0.8 was chosen because it felt reasonable, and
+      the human queue is now full of findings that turn out correct. What is the
+      principled fix?
+    options:
+      A: Raise the threshold to 0.9 and observe the queue next month.
+      B: Calibrate the threshold against a labelled set, so the cut point is chosen from measured accuracy at each confidence level.
+      C: Remove the threshold and route by severity instead.
+      D: Have the model re-score its own low-confidence findings.
+    answer: B
+    why:
+      A: A second guess is still a guess, and costs another month.
+      B: Calibration on labelled data is what turns a felt number into a defensible one.
+      C: Severity answers a different question from how sure the model is.
+      D: Self-rescoring reuses the signal that is already miscalibrated.
+
+# ---------------------------------------------------------------------------
+# D5 Context Management & Reliability
+# ---------------------------------------------------------------------------
+  - id: q-5.1-b
+    task: "5.1"
+    level: 1
+    scenario: Customer Support Agent
+    stem: >-
+      Which part of a long conversation should never be summarised away?
+    options:
+      A: The agent's earlier explanations to the customer.
+      B: The raw tool results from the first few turns.
+      C: The case-facts block holding amounts, dates and identifiers.
+      D: The system prompt's tone guidance.
+    answer: C
+    why:
+      A: Explanations can be summarised without losing the case.
+      B: Raw tool results are the first thing worth trimming.
+      C: Exact amounts, dates and IDs are the facts every later decision depends on.
+      D: Tone guidance lives in the system prompt and is resent each turn.
+  - id: q-5.1-c
+    task: "5.1"
+    level: 2
+    scenario: Customer Support Agent
+    stem: >-
+      After progressive summarisation, a refund amount of $247.83 has become a
+      recent order in the agent's context. What is the consequence and the fix?
+    options:
+      A: Only readability suffers, so nothing needs changing.
+      B: Raise the context limit so summarisation never triggers.
+      C: The agent should re-ask the customer for the amount each turn.
+      D: The agent can no longer act on the amount; keep a verbatim case-facts block outside the summarisable region.
+    answer: D
+    why:
+      A: A lost figure is a lost decision input, not a cosmetic issue.
+      B: A bigger window delays the problem rather than removing it.
+      C: Re-asking the customer for facts the system had is poor service.
+      D: Precise values must be pinned verbatim rather than left in the summarised region.
+  - id: q-5.1-d
+    task: "5.1"
+    level: 3
+    scenario: Customer Support Agent
+    stem: >-
+      A long transcript's critical constraint sits in the middle of the context
+      and is reliably ignored. What follows from this?
+    options:
+      A: Key findings and constraints belong near the start or end, because recall degrades for material in the middle of a long input.
+      B: The constraint should be repeated at every turn.
+      C: The context should be split across two parallel requests.
+      D: The constraint should be moved into a tool description.
+    answer: A
+    why:
+      A: Position matters, so important material is placed where recall is strongest.
+      B: Repetition at every turn inflates cost and still competes with surrounding bulk.
+      C: Splitting the request leaves each half without the other's context.
+      D: A tool description is read when selecting that tool, not as a standing constraint.
+  - id: q-5.1-e
+    task: "5.1"
+    level: 3
+    scenario: Customer Support Agent
+    stem: >-
+      Tool results average 4 KB each and twelve accumulate per conversation.
+      What is the right handling?
+    options:
+      A: Drop the oldest results once the context fills.
+      B: Trim each result to the fields the agent actually uses before appending it.
+      C: Summarise all twelve into one paragraph after every turn.
+      D: Store the results externally and reference them by identifier.
+    answer: B
+    why:
+      A: Dropping by age discards results that may still be needed.
+      B: Trimming at the point of appending keeps what matters and never admits the bulk.
+      C: Repeated summarisation is what loses precise values.
+      D: An identifier the model cannot dereference is the same as not having the data.
+  - id: q-5.2-b
+    task: "5.2"
+    level: 1
+    scenario: Customer Support Agent
+    stem: >-
+      Which signal should trigger escalation immediately?
+    options:
+      A: A negative sentiment score on the customer's last message.
+      B: The model reporting low confidence in its answer.
+      C: The customer explicitly asking to speak to a human.
+      D: The conversation exceeding ten turns.
+    answer: C
+    why:
+      A: Sentiment is an unreliable proxy for wanting a human.
+      B: Self-reported confidence is not a dependable trigger.
+      C: An explicit request for a human is honoured immediately.
+      D: Length alone says nothing about whether progress is being made.
+  - id: q-5.2-c
+    task: "5.2"
+    level: 2
+    scenario: Customer Support Agent
+    stem: >-
+      A customer lookup by surname returns three matching accounts. What should
+      the agent do?
+    options:
+      A: Use the most recently active account, since it is the likeliest match.
+      B: Act on all three accounts and report the combined result.
+      C: Escalate to a human immediately.
+      D: Ask the customer for a distinguishing identifier such as an order number or email.
+    answer: D
+    why:
+      A: Guessing the most recent account is the trap, and it can act on a stranger's order.
+      B: Touching three accounts to serve one is a privacy incident.
+      C: Escalation is premature when one question would resolve it.
+      D: Asking for an identifier is cheap and resolves the ambiguity correctly.
+  - id: q-5.2-d
+    task: "5.2"
+    level: 3
+    scenario: Customer Support Agent
+    stem: >-
+      A request falls outside every documented policy. The agent constructs a
+      reasonable-sounding answer. What should have happened?
+    options:
+      A: A policy gap is an escalation trigger, because inventing policy commits the business to something nobody approved.
+      B: The answer is acceptable if it is consistent with the policy's spirit.
+      C: The agent should decline and end the conversation.
+      D: The agent should ask the customer what the policy should be.
+    answer: A
+    why:
+      A: Policy gaps escalate to someone with authority to decide.
+      B: Reasoning from spirit is how unapproved commitments get made.
+      C: Declining abandons a customer with a legitimate need.
+      D: The customer is not the authority on company policy.
+  - id: q-5.2-e
+    task: "5.2"
+    level: 3
+    scenario: Customer Support Agent
+    stem: >-
+      A team wants escalation driven by a sentiment model, arguing that upset
+      customers should reach a human sooner. What is the objection?
+    options:
+      A: Sentiment models are too slow to run per message.
+      B: Sentiment measures tone rather than whether the agent can resolve the case, so it escalates calm unsolvable cases late and angry solvable ones early.
+      C: Sentiment scores cannot be logged for audit.
+      D: Customers would learn to write angrily to reach a human.
+    answer: B
+    why:
+      A: Latency is not the substantive objection.
+      B: The trigger should track resolvability — explicit request, policy gap or stalled progress — not mood.
+      C: Scores are perfectly loggable.
+      D: A real concern, but secondary to the trigger measuring the wrong thing.
+  - id: q-5.3-b
+    task: "5.3"
+    level: 1
+    scenario: Multi-Agent Research
+    stem: >-
+      What distinguishes an access failure from a valid empty result?
+    options:
+      A: Nothing meaningful — both mean no data was returned.
+      B: An access failure always returns an HTTP status, an empty result never does.
+      C: An access failure means the question was not answered and may be retryable; an empty result is the answer.
+      D: An empty result is always a bug in the tool.
+    answer: C
+    why:
+      A: Conflating them is exactly what causes pointless retries and false escalations.
+      B: Status codes are an implementation detail, not the distinction.
+      C: One is an unanswered question, the other is an answer of none.
+      D: Empty results are routine and legitimate.
+  - id: q-5.3-c
+    task: "5.3"
+    level: 2
+    scenario: Multi-Agent Research
+    stem: >-
+      One of five parallel subagents fails. The orchestrator aborts the whole
+      workflow. What is wrong with that?
+    options:
+      A: Nothing — partial results cannot be trusted.
+      B: The orchestrator should substitute a cached result for the failed subagent.
+      C: The orchestrator should retry the whole workflow from the start.
+      D: Four subagents' work is discarded for one failure; the right behaviour is to keep the partial results and annotate the coverage gap.
+    answer: D
+    why:
+      A: Partial results are trustworthy as long as the gap is explicit.
+      B: Silently filling a gap with stale data is worse than reporting it.
+      C: Restarting repeats four successful runs.
+      D: Keeping what succeeded and naming what did not is both cheaper and more honest.
+  - id: q-5.3-d
+    task: "5.3"
+    level: 3
+    scenario: Multi-Agent Research
+    stem: >-
+      What should a propagated error carry so the receiving layer can act on it?
+    options:
+      A: The error type, the query that was attempted, any partial results and the alternatives already tried.
+      B: The stack trace, so the cause is fully visible.
+      C: A retry count and a timestamp.
+      D: A severity level assigned by the failing subagent.
+    answer: A
+    why:
+      A: Type, attempt, partial results and alternatives are what let the caller decide the next move.
+      B: A stack trace helps an engineer later; it does not tell the caller what to do now.
+      C: Counters describe the failure without describing the state.
+      D: A severity label is a judgement without the evidence behind it.
+  - id: q-5.3-e
+    task: "5.3"
+    level: 3
+    scenario: Multi-Agent Research
+    stem: >-
+      A subagent swallows a failed region and returns only the regions that
+      worked. The final report reads as complete. What is the harm?
+    options:
+      A: Only efficiency, since the missing region can be requested later.
+      B: The report makes a claim of coverage it cannot support, and nobody downstream can tell that a region is missing.
+      C: The coordinator will retry the subagent unnecessarily.
+      D: Token cost rises because the region is fetched twice.
+    answer: B
+    why:
+      A: The problem is a false claim, not a scheduling inefficiency.
+      B: Silent suppression converts a known gap into an invisible one, which is the worst of the options.
+      C: Nothing signals the coordinator to retry at all.
+      D: Cost is unaffected; the call never succeeded.
+  - id: q-5.4-b
+    task: "5.4"
+    level: 1
+    scenario: Developer Productivity
+    stem: >-
+      What happens to agent output as a single exploration session grows very
+      long?
+    options:
+      A: It becomes more accurate as more of the codebase is in context.
+      B: It stops calling tools and answers only from memory.
+      C: It drifts toward generic patterns and away from this codebase's specifics.
+      D: It refuses further requests until the session is compacted.
+    answer: C
+    why:
+      A: More material in context does not mean better recall of any of it.
+      B: Tool use continues; it is the specificity that decays.
+      C: Long sessions drift toward generic advice, which is the signal to externalise state.
+      D: There is no such automatic refusal.
+  - id: q-5.4-c
+    task: "5.4"
+    level: 2
+    scenario: Developer Productivity
+    stem: >-
+      An exploration has produced useful findings across forty files, and the
+      context is nearly full. What preserves the findings best?
+    options:
+      A: Compact the session and continue, trusting the compaction summary.
+      B: Increase the output token limit.
+      C: Keep going and rely on the findings being recalled when needed.
+      D: Write the findings to a scratchpad file, then continue or restart from it.
+    answer: D
+    why:
+      A: Compaction is lossy in ways you do not choose.
+      B: Output limits have nothing to do with retaining findings.
+      C: Relying on recall in a full context is where drift begins.
+      D: A scratchpad outside the session is durable and reloadable, and you decide what it keeps.
+  - id: q-5.4-d
+    task: "5.4"
+    level: 3
+    scenario: Developer Productivity
+    stem: >-
+      A review of a large codebase needs the main session to stay focused on
+      decisions rather than file excerpts. What structure achieves that?
+    options:
+      A: Delegate discovery to subagents that return conclusions, keeping excerpts out of the main context.
+      B: Read every file in the main session, then delete the excerpts.
+      C: Compact the main session after each file.
+      D: Lower the main session's temperature to keep it on task.
+    answer: A
+    why:
+      A: Isolating discovery is what keeps the decision context clean.
+      B: You cannot remove what has already shaped the context.
+      C: Repeated compaction loses detail unpredictably.
+      D: Temperature does not control what occupies the context.
+  - id: q-5.4-e
+    task: "5.4"
+    level: 3
+    scenario: Developer Productivity
+    stem: >-
+      A six-hour migration run dies at hour five. What should have been in place
+      so the work was not lost?
+    options:
+      A: A longer timeout on the run.
+      B: An exported manifest of completed work, written as the run progressed, so a new run resumes from it.
+      C: A larger context window.
+      D: A retry wrapper around the whole run.
+    answer: B
+    why:
+      A: A timeout does not survive a crash.
+      B: Durable progress written outside the session is what makes a run resumable.
+      C: Window size does not persist anything.
+      D: Retrying the whole run repeats five hours of completed work.
+  - id: q-5.5-b
+    task: "5.5"
+    level: 1
+    scenario: Structured Extraction
+    stem: >-
+      Why is a single aggregate accuracy figure an insufficient quality measure?
+    options:
+      A: It is usually computed on too small a sample.
+      B: It cannot be compared between months.
+      C: It can hide a document type or field that performs far worse than the average.
+      D: It excludes documents that failed validation.
+    answer: C
+    why:
+      A: Sample size is a separate concern from aggregation.
+      B: Comparability is not the structural flaw.
+      C: Averages conceal weak segments, which is why validation is sliced by type and field.
+      D: What is excluded depends on the pipeline, not on aggregation itself.
+  - id: q-5.5-c
+    task: "5.5"
+    level: 2
+    scenario: Structured Extraction
+    stem: >-
+      Overall accuracy is 97 percent, yet finance keeps finding wrong tax
+      amounts. What should be measured?
+    options:
+      A: A larger overall sample, to tighten the confidence interval.
+      B: The rate at which finance reports problems.
+      C: The model's average confidence on tax fields.
+      D: Accuracy broken down per document type and per field, so the tax field's own rate is visible.
+    answer: D
+    why:
+      A: A bigger sample of the same average still hides the segment.
+      B: Complaint volume is a lagging proxy for the thing you can measure directly.
+      C: Confidence is the model's opinion, not measured accuracy.
+      D: Per-type and per-field breakdowns are what expose a weak field inside a good average.
+  - id: q-5.5-d
+    task: "5.5"
+    level: 3
+    scenario: Structured Extraction
+    stem: >-
+      Human reviewers only ever see low-confidence output, and the measured
+      accuracy of high-confidence output is unknown. What should change?
+    options:
+      A: Sample a small share of high-confidence output too, because otherwise a confidently wrong segment is undetectable.
+      B: Nothing — reviewing confident output wastes scarce capacity.
+      C: Route all output to review until the backlog clears.
+      D: Have the model re-score its high-confidence findings.
+    answer: A
+    why:
+      A: A small audit sample is what keeps the confidence signal honest.
+      B: Never checking the confident path is how a silent regression survives.
+      C: Reviewing everything abandons the triage that makes the queue viable.
+      D: Re-scoring reuses the signal whose calibration is in question.
+  - id: q-5.5-e
+    task: "5.5"
+    level: 3
+    scenario: Structured Extraction
+    stem: >-
+      Confidence is currently reported once per document. Reviewers say it is
+      not actionable. What is the improvement?
+    options:
+      A: Report it as a letter grade rather than a number.
+      B: Report confidence per field, so review time goes to the specific values that are uncertain.
+      C: Report the average confidence across the batch.
+      D: Hide confidence from reviewers so it does not bias them.
+    answer: B
+    why:
+      A: Relabelling the same number changes nothing about what to check.
+      B: Per-field confidence tells a reviewer exactly which value to look at.
+      C: A batch average is further from the decision, not closer.
+      D: Removing the signal leaves reviewers with no way to triage at all.
+  - id: q-5.6-b
+    task: "5.6"
+    level: 1
+    scenario: Multi-Agent Research
+    stem: >-
+      What should a claim-source mapping record?
+    options:
+      A: The claim and the name of the agent that found it.
+      B: The claim and a confidence score.
+      C: The claim, its source URL or document, the supporting excerpt and the date.
+      D: The claim and the number of sources that agreed.
+    answer: C
+    why:
+      A: Which agent found it does not let a reader verify it.
+      B: A score is an assertion, not evidence.
+      C: Source, excerpt and date are what make a claim checkable.
+      D: Agreement counts without sources cannot be audited.
+  - id: q-5.6-c
+    task: "5.6"
+    level: 2
+    scenario: Multi-Agent Research
+    stem: >-
+      Two sources give market size as $4.2bn and $6.8bn. What belongs in the
+      report?
+    options:
+      A: The higher figure, with the lower one dropped as an outlier.
+      B: Neither, until a third source breaks the tie.
+      C: The average of the two.
+      D: Both figures with their sources and dates, since differing dates or definitions usually explain the gap.
+    answer: D
+    why:
+      A: Choosing arbitrarily hides a disagreement the reader needs to see.
+      B: Withholding both loses information that is already useful when attributed.
+      C: Averaging two incompatible definitions produces a number nobody published.
+      D: Attribution plus dates lets the reader judge, and often explains the discrepancy outright.
+  - id: q-5.6-d
+    task: "5.6"
+    level: 3
+    scenario: Multi-Agent Research
+    stem: >-
+      Why does provenance require dates and not just sources?
+    options:
+      A: Because two sources often disagree only because they describe different periods, and the date is what makes that visible.
+      B: Because readers prefer recent citations.
+      C: Because undated sources cannot be linked.
+      D: Because dates are needed to order the bibliography.
+    answer: A
+    why:
+      A: Dates frequently resolve an apparent conflict into two consistent facts.
+      B: Preference is not the mechanism.
+      C: Undated sources are still linkable.
+      D: Ordering is presentation, not provenance.
+  - id: q-5.6-e
+    task: "5.6"
+    level: 3
+    scenario: Multi-Agent Research
+    stem: >-
+      A synthesis step renders quarterly financials as flowing prose and
+      competitor news as a dense table. Reviewers struggle with both. What is the
+      principle being missed?
+    options:
+      A: Reports should use one consistent format throughout.
+      B: Render by content type — comparable numeric series as tables, narrative developments as prose.
+      C: All content should be tabular, because tables are denser.
+      D: Formatting should match whatever the source used.
+    answer: B
+    why:
+      A: Consistency for its own sake is what produced both mismatches.
+      B: The format should follow the structure of the content it carries.
+      C: Tables flatten narrative into cells that lose the causal thread.
+      D: Source formatting reflects the source's purpose, not the report's.

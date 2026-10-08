@@ -1,0 +1,124 @@
+# Architecture scenarios. Each is a business case with a few trade-off decisions
+# (model tier, caching, batch vs stream, RAG vs tools) plus a short written rationale.
+# Decisions are scored deterministically (letter match, weighted equally) and the
+# chosen options' monthly cost is summed in Python -- never asked of the LLM, which
+# only critiques the free-text rationale against the rubric below (same reviewer
+# pattern as milestones/labs).
+#
+# Rubric entries MUST use block mappings with a folded scalar (`check: >-`), never
+# inline flow mappings. See claude-config/rules/content-yaml.md.
+scenarios:
+  - id: SC1
+    title: Support Bot Cost Blowup
+    xp: 70
+    tasks: ["3.1", "3.2", "5.1"]
+    brief: >-
+      A support chatbot handles 200k requests/month. Most are simple FAQ lookups;
+      about 15% need multi-step reasoning over account data. The current build
+      calls a top-tier model for every request and re-fetches the FAQ document on
+      every turn, and finance has flagged a cost overrun. Pick a model tier and a
+      caching strategy, then justify the combination in writing.
+    decisions:
+      - id: model-tier
+        question: Which model-tier strategy best fits this traffic mix?
+        options:
+          A: Top-tier model for every request, to keep answer quality uniform.
+          B: Route FAQ lookups to a small/fast model and multi-step reasoning to a top-tier model.
+          C: Smallest/cheapest model for every request, to minimize spend.
+          D: Fine-tune one mid-tier model and use it for everything.
+        correct: B
+        cost: { A: 9000, B: 2200, C: 900, D: 3400 }
+        why:
+          A: Pays top-tier pricing for the 85% of traffic that does not need it.
+          B: Matches spend to task difficulty; this is the standard tiered-routing pattern.
+          C: Cheapest, but multi-step reasoning requests will show visibly worse quality.
+          D: Fine-tuning adds ongoing retraining cost for a problem routing solves without it.
+      - id: caching
+        question: What should change about the FAQ document handling?
+        options:
+          A: Nothing; re-fetching on every turn guarantees freshness.
+          B: Cache the FAQ document client-side only, refreshed daily.
+          C: Use prompt caching for the FAQ document since it is static within a session.
+          D: Shrink the FAQ document so re-sending it costs less.
+        correct: C
+        cost: { A: 2000, B: 1400, C: 300, D: 1200 }
+        why:
+          A: Pays full input-token price for identical content on every single turn.
+          B: Still re-sends the full document to the model on every API call.
+          C: Prompt caching is built for exactly this case, repeated static context.
+          D: Reduces but does not remove the repeated-send cost; caching removes it outright.
+    rubric:
+      - id: tradeoff-reasoning
+        weight: 50
+        check: >-
+          Rationale explains WHY the chosen model tier and caching approach fit this
+          traffic mix (percent simple vs complex, repeated static content), not just
+          which options were picked.
+      - id: cost-awareness
+        weight: 25
+        check: >-
+          Rationale references the cost impact of the choice in concrete terms (e.g.
+          per-request or per-month), showing the decision was made against a budget.
+      - id: risk-identification
+        weight: 25
+        check: >-
+          Rationale names at least one risk or failure mode of the chosen approach
+          (e.g. misrouting a hard query to the small model) and how it is mitigated.
+
+  - id: SC2
+    title: Nightly Report vs Live Dashboard
+    xp: 70
+    tasks: ["3.3", "5.2"]
+    brief: >-
+      A finance team wants anomaly alerts on transaction data. Volume is 2M
+      records/day, arriving continuously, and the team currently checks a report
+      once a day. Leadership wants to know whether to move to real-time and how the
+      agent should decide what to look at: a fixed set of tools, or retrieval over
+      a growing knowledge base of past incidents.
+    decisions:
+      - id: batch-vs-stream
+        question: Should ingestion move from daily batch to streaming?
+        options:
+          A: Move everything to streaming immediately for maximum freshness.
+          B: Keep daily batch; it already meets the stated need.
+          C: Stream only the subset of transactions above a risk threshold; batch the rest.
+          D: Poll the source every 5 minutes and call it "near real-time."
+        correct: C
+        cost: { A: 12000, B: 1500, C: 4500, D: 7000 }
+        why:
+          A: Full streaming infra for a once-a-day review need is over-engineering.
+          B: Ignores the stated goal of catching anomalies sooner than once a day.
+          C: Targets latency spend at the transactions where it actually matters.
+          D: Adds polling complexity and cost without the guarantees real streaming gives.
+      - id: rag-vs-tools
+        question: How should the agent access context on past incidents?
+        options:
+          A: Give it a fixed set of lookup tools for known incident categories only.
+          B: Retrieve relevant past incidents from a vector store, since the incident base keeps growing and queries are open-ended.
+          C: Paste the entire incident history into the prompt every time.
+          D: Hard-code the top 10 historical incidents into the system prompt.
+        correct: B
+        cost: { A: 500, B: 1100, C: 6000, D: 300 }
+        why:
+          A: Fixed tools cannot cover incident types that did not exist when they were built.
+          B: RAG fits a growing, open-ended corpus searched by relevance, not fixed categories.
+          C: Full-history pasting blows the context window and the bill as history grows.
+          D: Freezes the agent's knowledge at whatever existed when the prompt was written.
+    rubric:
+      - id: tradeoff-reasoning
+        weight: 50
+        check: >-
+          Rationale explains why the chosen ingestion speed and retrieval approach
+          match the described volume, latency need, and the fact the incident base
+          grows over time.
+      - id: cost-awareness
+        weight: 25
+        check: >-
+          Rationale references the cost or operational overhead of the chosen
+          approach versus the alternatives, not just a quality argument.
+      - id: risk-identification
+        weight: 25
+        check: >-
+          Rationale names a concrete risk of the chosen approach (e.g. retrieval
+          missing a relevant incident, or streaming raising false-positive rate)
+          and a mitigation.

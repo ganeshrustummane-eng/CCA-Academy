@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CCA Academy: how to get certified-ready efficiently</title>
+<style>
+/* Same "Warm Studio" tokens as app/frontend/src/styles.css so the deck looks like the app. */
+:root{
+  --bg:#fdfcfa;--surface:#fff;--raised:#f7f5f1;--text:#1c1a17;--muted:#6f6a63;
+  --border:#e8e3db;--border-strong:#d8d1c5;--accent:#c2613f;--accent-soft:#fbefe9;--accent-fg:#fff;
+  --ok:#15803d;--ok-soft:#e8f6ec;--warn:#b45309;--warn-soft:#fdf3e3;--bad:#b91c1c;--bad-soft:#fdeded;
+  --font:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+}
+:root[data-theme="dark"]{
+  --bg:#16151a;--surface:#1e1d23;--raised:#26252c;--text:#f2efea;--muted:#a39d94;
+  --border:#2e2c34;--border-strong:#3d3a44;--accent:#e08a64;--accent-soft:#3a2a23;--accent-fg:#16151a;
+  --ok:#4ade80;--ok-soft:#14321f;--warn:#fbbf24;--warn-soft:#3a2a0d;--bad:#f87171;--bad-soft:#3a1515;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--font);overflow:hidden}
+/* Every slide is laid out on a fixed 1280x720 canvas, then scaled to fit the window (see fit()).
+   Text and diagrams scale together, so nothing reflows or overlaps on smaller screens. */
+.deck{position:fixed;left:0;right:0;top:0;bottom:var(--notes-h,0px)}
+.slide{display:none;width:1280px;height:720px;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(var(--k,1));background:var(--surface);
+  border:1px solid var(--border);border-radius:16px;box-shadow:0 12px 32px rgb(28 26 23/.10);
+  padding:44px 64px 60px;position:relative;overflow:hidden;flex-direction:column}
+.slide > svg{flex:1 1 0;min-height:0}
+.slide > .grid{flex:1 1 0}
+.slide.on{display:flex}
+.slide h1{font-size:46px;margin:0 0 12px;letter-spacing:-.02em}
+.slide h2{font-size:32px;margin:0 0 6px;letter-spacing:-.01em}
+.slide .lead{color:var(--muted);font-size:19px;margin:0 0 24px}
+.slide p,.slide li{font-size:18px;line-height:1.5}
+.kicker{color:var(--accent);font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px}
+.foot{position:absolute;left:64px;right:64px;bottom:20px;display:flex;justify-content:space-between;color:var(--muted);font-size:12px}
+.brand{display:inline-flex;align-items:center;gap:8px;font-weight:700}
+.mark{width:22px;height:22px;border-radius:6px;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;font-size:13px}
+.grid{display:grid;gap:16px;flex:1;min-height:0}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+.card{background:var(--raised);border:1px solid var(--border);border-radius:10px;padding:16px 18px}
+.card h3{margin:0 0 6px;font-size:18px}
+.card p,.card li{font-size:15px;margin:0;color:var(--muted)}
+.card ul{margin:6px 0 0;padding-left:18px}
+.card.accent{background:var(--accent-soft);border-color:var(--accent)}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:13px;font-weight:600}
+.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--border)}
+th{color:var(--muted);font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.05em}
+code{font-family:var(--mono);font-size:.9em;background:var(--raised);padding:1px 6px;border-radius:4px;border:1px solid var(--border)}
+svg{width:100%;height:100%;font-family:var(--font)}
+svg .box{fill:var(--raised);stroke:var(--border-strong);stroke-width:1.5}
+svg .abox{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2}
+svg .t{fill:var(--text);font-size:15px;font-weight:600}
+svg .s{fill:var(--muted);font-size:12px}
+svg .ln{stroke:var(--accent);stroke-width:2;fill:none}
+svg .ln2{stroke:var(--border-strong);stroke-width:1.5;fill:none;stroke-dasharray:4 4}
+svg .acc{fill:var(--accent)} svg .okf{fill:var(--ok)} svg .badf{fill:var(--bad)}
+.notes{display:none;position:fixed;left:0;right:0;bottom:0;max-height:34vh;overflow:auto;background:var(--raised);
+  border-top:2px solid var(--accent);padding:14px 28px;font-size:15px;line-height:1.5}
+body.shownotes .notes{display:block}
+body.shownotes{--notes-h:34vh}
+.notes b{color:var(--accent)}
+.hud{position:fixed;right:14px;bottom:6px;color:var(--muted);font-size:11px;z-index:2;opacity:.7}
+body.shownotes .hud{display:none}
+.qa{display:grid;grid-template-columns:1fr 1fr;gap:10px 22px;font-size:14px}
+.qa div b{display:block;font-size:15px;margin-bottom:2px}
+.qa div{color:var(--muted)} .qa div b{color:var(--text)}
+@media print{
+  .hud,.notes{display:none!important}
+  html,body{overflow:visible}
+  .deck{position:static;display:block}
+  .slide{display:flex!important;position:relative;left:auto;top:auto;transform:none!important;page-break-after:always;box-shadow:none;margin:0 auto}
+  @page{size:landscape;margin:8mm}
+}
+</style>
+</head>
+<body>
+<div class="hud">← → navigate · N notes · T theme · F fullscreen · P print/PDF · <span id="pos"></span></div>
+<div class="deck">
+
+<!-- 1 -->
+<section class="slide" data-notes="<b>Open (1 min).</b> Goal of the session: by the end everyone can sign in, knows the weekly routine, and knows which three tabs give the most exam value per hour. Ask: who has already opened the app? Who has an API key? That tells you how long to spend on setup.">
+  <div style="margin:auto 0">
+    <div class="kicker">Team session · Claude Certified Architect (Foundations)</div>
+    <h1>CCA Academy</h1>
+    <p class="lead" style="font-size:24px;max-width:780px">Learn it, drill it, build it, prove it.<br>How to use the app to get exam-ready in 6 weeks at about 3.5 hours a week.</p>
+    <p><span class="pill">30 task statements</span> <span class="pill">150 original questions</span> <span class="pill">8 milestone projects</span> <span class="pill">AI tutor + reviewer</span></p>
+  </div>
+  <div class="foot"><span class="brand"><span class="mark">C</span>CCA Academy</span><span>Independent study aid, not affiliated with Anthropic</span></div>
+</section>
+
+<!-- 2 -->
+<section class="slide" data-notes="<b>Why this app exists.</b> The exam is scenario-based multiple choice. The hard part: wrong answers sound like good engineering. So recall is not enough, you have to eliminate distractors. Every feature in the app is built around that. Point at the weights: D1 is over a quarter of the exam, so it gets the most time. Note the app's mock exam uses a 700/1000 pass mark; the plan targets 720 for the real one, so aim higher than the app's pass mark.">
+  <div class="kicker">The problem</div>
+  <h2>The exam punishes "sounds right"</h2>
+  <p class="lead">5 domains, 6 scenarios, scenario-based multiple choice. Wrong options look like good engineering.</p>
+  <div class="grid g2">
+    <svg viewBox="0 0 560 280" role="img" aria-label="Domain weights bar chart">
+      <g font-size="14">
+        <text class="t" x="0" y="20">Exam weight by domain</text>
+        <text class="s" x="0" y="62">D1 Agentic architecture</text><rect class="acc" x="200" y="48" width="297" height="22" rx="4"/><text class="t" x="505" y="64">27%</text>
+        <text class="s" x="0" y="104">D3 Claude Code config</text><rect class="acc" x="200" y="90" width="220" height="22" rx="4" opacity=".8"/><text class="t" x="428" y="106">20%</text>
+        <text class="s" x="0" y="146">D4 Prompts &amp; structured out</text><rect class="acc" x="200" y="132" width="220" height="22" rx="4" opacity=".8"/><text class="t" x="428" y="148">20%</text>
+        <text class="s" x="0" y="188">D2 Tool design &amp; MCP</text><rect class="acc" x="200" y="174" width="198" height="22" rx="4" opacity=".65"/><text class="t" x="406" y="190">18%</text>
+        <text class="s" x="0" y="230">D5 Context &amp; reliability</text><rect class="acc" x="200" y="216" width="165" height="22" rx="4" opacity=".5"/><text class="t" x="373" y="232">15%</text>
+      </g>
+    </svg>
+    <div class="card">
+      <h3>Rules the exam keeps testing</h3>
+      <ul>
+        <li>Enforce high-stakes rules in code (gates, hooks), not in the prompt</li>
+        <li>End the loop on <code>stop_reason</code>, never by parsing text</li>
+        <li>Fix tool descriptions before adding a classifier</li>
+        <li>Subagents have isolated context: pass what they need</li>
+        <li>Explicit criteria beat "be conservative"</li>
+        <li>Sync API for blocking work, Batch for latency-tolerant</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot"><span class="brand"><span class="mark">C</span>CCA Academy</span><span>2</span></div>
+</section>
+
+<!-- 3 -->
+<section class="slide" data-notes="<b>The map.</b> The sidebar has four groups and that is the whole mental model: Learn, Practise, Build, Progress. Every tab has a 'How this tab works' panel under its title, and every page except the mock exam has a floating Ask AI button. Tell people: if you are lost, open Learning path, it always says 'you are here'.">
+  <div class="kicker">The app at a glance</div>
+  <h2>Four groups, twelve tabs</h2>
+  <p class="lead">The sidebar is the course. Every tab has a "How this tab works" panel and an Ask AI button.</p>
+  <svg viewBox="0 0 1080 330" role="img" aria-label="App map">
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="acc"/></marker></defs>
+    <g>
+      <rect class="abox" x="0" y="10" width="240" height="56" rx="10"/><text class="t" x="20" y="44">LEARN</text><text class="s" x="95" y="44">understand the rules</text>
+      <rect class="box" x="0" y="80" width="240" height="44" rx="8"/><text class="t" x="16" y="107">Learning path</text><text class="s" x="140" y="107">start here</text>
+      <rect class="box" x="0" y="132" width="240" height="44" rx="8"/><text class="t" x="16" y="159">Dashboard</text><text class="s" x="120" y="159">XP, readiness</text>
+      <rect class="box" x="0" y="184" width="240" height="44" rx="8"/><text class="t" x="16" y="211">Curriculum</text><text class="s" x="120" y="211">30 tasks + traps</text>
+      <rect class="box" x="0" y="236" width="240" height="44" rx="8"/><text class="t" x="16" y="263">Tutor</text><text class="s" x="120" y="263">guided lesson</text>
+
+      <rect class="abox" x="280" y="10" width="240" height="56" rx="10"/><text class="t" x="300" y="44">PRACTISE</text><text class="s" x="395" y="44">drill until it sticks</text>
+      <rect class="box" x="280" y="80" width="240" height="44" rx="8"/><text class="t" x="296" y="107">Practice</text><text class="s" x="390" y="107">weak-first quiz</text>
+      <rect class="box" x="280" y="132" width="240" height="44" rx="8"/><text class="t" x="296" y="159">Mock exam</text><text class="s" x="390" y="159">60 Q · 90 min</text>
+
+      <rect class="abox" x="560" y="10" width="240" height="56" rx="10"/><text class="t" x="580" y="44">BUILD</text><text class="s" x="650" y="44">apply it for real</text>
+      <rect class="box" x="560" y="80" width="240" height="44" rx="8"/><text class="t" x="576" y="107">Milestones</text><text class="s" x="680" y="107">8 projects</text>
+      <rect class="box" x="560" y="132" width="240" height="44" rx="8"/><text class="t" x="576" y="159">Prompt/Tool Lab</text><text class="s" x="710" y="159">3 labs</text>
+      <rect class="box" x="560" y="184" width="240" height="44" rx="8"/><text class="t" x="576" y="211">Arch. scenarios</text><text class="s" x="710" y="211">trade-offs</text>
+      <rect class="box" x="560" y="236" width="240" height="44" rx="8"/><text class="t" x="576" y="263">Agent sandbox</text><text class="s" x="700" y="263">break the loop</text>
+
+      <rect class="abox" x="840" y="10" width="240" height="56" rx="10"/><text class="t" x="860" y="44">PROGRESS</text><text class="s" x="950" y="44">see where you are</text>
+      <rect class="box" x="840" y="80" width="240" height="44" rx="8"/><text class="t" x="856" y="107">Leaderboard</text><text class="s" x="960" y="107">you + squads</text>
+      <rect class="box" x="840" y="132" width="240" height="44" rx="8"/><text class="t" x="856" y="159">Settings</text><text class="s" x="940" y="159">name, track, key</text>
+
+      <path class="ln" d="M240 38H280" marker-end="url(#ar)"/><path class="ln" d="M520 38H560" marker-end="url(#ar)"/><path class="ln" d="M800 38H840" marker-end="url(#ar)"/>
+      <rect class="box" x="840" y="236" width="240" height="44" rx="8" style="stroke:var(--accent);stroke-dasharray:5 4"/><text class="t" x="856" y="263">Ask AI</text><text class="s" x="920" y="263">floating, every page</text>
+      <text class="s" x="0" y="318">Light/dark toggle at the bottom of the sidebar. Ask AI is switched off during the mock exam.</text>
+    </g>
+  </svg>
+  <div class="foot"><span class="brand"><span class="mark">C</span>CCA Academy</span><span>3</span></div>
+</section>
+
+<!-- 4 -->
+<section class="slide" data-notes="<b>Setup, do it live.</b> Five minutes. Open the app, Settings: name, squad, track, provider, key, Test connection. Stress three things. One: use your OWN key, never a shared one. Two: the key sits in browser sessionStorage only, travels per request, and the server never stores or logs it. Close the tab and it is gone, so you re-paste it next session. Three: no key? Curriculum, practice, mock exam, progress and the sandbox's offline demo all work without one. Only tutor, Ask AI, generation and reviews need the key.">
+  <div class="kicker">Get started · 5 minutes</div>
+  <h2>Sign in once, then it remembers you</h2>
+  <p class="lead">Open the app → <b>Settings</b>. Everything except the API key is saved in your browser.</p>
+  <svg viewBox="0 0 1080 150" role="img" aria-label="Setup steps">
+    <defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="acc"/></marker></defs>
+    <g>
+      <rect class="abox" x="0" y="20" width="190" height="96" rx="12"/><text class="t" x="18" y="52">1  Name</text><text class="s" x="18" y="76">same name every time</text><text class="s" x="18" y="94">(it is your progress ID)</text>
+      <rect class="abox" x="222" y="20" width="190" height="96" rx="12"/><text class="t" x="240" y="52">2  Squad</text><text class="s" x="240" y="76">your team of 4-5</text><text class="s" x="240" y="94">for the leaderboard</text>
+      <rect class="abox" x="444" y="20" width="190" height="96" rx="12"/><text class="t" x="462" y="52">3  Track</text><text class="s" x="462" y="76">sets question depth</text><text class="s" x="462" y="94">(next slide)</text>
+      <rect class="abox" x="666" y="20" width="190" height="96" rx="12"/><text class="t" x="684" y="52">4  Provider + key</text><text class="s" x="684" y="76">DIAL (VPN), OpenAI-</text><text class="s" x="684" y="94">compatible or Anthropic</text>
+      <rect class="abox" x="888" y="20" width="190" height="96" rx="12"/><text class="t" x="906" y="52">5  Test connection</text><text class="s" x="906" y="76">green = AI features on</text><text class="s" x="906" y="94">then go to Learning path</text>
+      <path class="ln" d="M190 68H222" marker-end="url(#ar2)"/><path class="ln" d="M412 68H444" marker-end="url(#ar2)"/><path class="ln" d="M634 68H666" marker-end="url(#ar2)"/><path class="ln" d="M856 68H888" marker-end="url(#ar2)"/>
+    </g>
+  </svg>
+  <div class="grid g3" style="margin-top:8px;flex:none">
+    <div class="card"><h3>Your own key only</h3><p>Personal keys are for individual use. Never share one in chat or a group.</p></div>
+    <div class="card"><h3>Key never stored</h3><p>Kept in this browser tab's session only and sent per request. Close the tab and re-paste next time.</p></div>
+    <div class="card accent"><h3>No key? Still useful</h3><p>Curriculum, Practice, Mock exam, Progress and the sandbox's offline demo all work without one.</p></div>
+  </div>
+  <div class="foot"><span class="brand"><span class="mark">C</span>CCA Academy</span><span>4</span></div>
+</section>
+
+<!-- 5 -->
+<section class="slide" data-notes="<b>Tracks.</b> Questions are tagged level 1 foundational, 2 applied, 3 architectural. The track decides which levels you see. If you are unsure, keep the default, Senior, which shows everything. Builders who find level 3 overwhelming can start on Builder and switch later; progress is kept.">
+  <div class="kicker">Pick your track</div>
+  <h2>Same course, the right depth for you</h2>
+  <p class="lead">Your track decides which question levels Practice and the mock exam pull from. Default is Senior.</p>
+  <table>
+    <tr><th>Track</th><th>Who</th><th>L1 foundational</th><th>L2 applied</th><th>L3 architectural</th></tr>
+    <tr><td><b>Builder</b></td><td>Newer to LLM APIs</td><td class="ok">●</td><td class="ok">●</td><td class="note">–</td></tr>
+    <tr><td><b>Senior</b> <span class="pill">default</span></td><td>Most engineers</td><td class="ok">●</td><td class="ok">●</td><td class="ok">●</td></tr>
+    <tr><td><b>Architect</b></td><td>Designs systems already</td><td class="note">–</td><td class="ok">●</td><td class="ok">●</td></tr>
+    <tr><td><b>Director</b></td><td>Leads, decision makers</td><td class="note">–</td><td class="ok">●</td><td class="ok">●</td></tr>
+  </table>
+  <p style="margin-top:22px;color:var(--muted)">New to LLM APIs entirely? Open <b>Curriculum → "The basics"</b> card before anything else.</p>
+  <div class="foot"><span class="brand"><span class="mark">C</span>CCA Academy</span><span>5</span></div>
+</section>
+
+<!-- 6 -->
+<section class="slide" data-notes="<b>The core loop. This is the most important slide.</b> Learn the task, drill it, build the milestone, get it reviewed, and only at the end sit the mock exam. The arrow back from Practice to Curriculum is the key habit: every wrong answer links straight back to the task and its traps. Read the trap, then retry. Do not just click through to the next question.">
+  <div class="kicker">How to use it · the weekly loop</div>
+  <h2>Learn → Practise → Build → Review → Prove</h2>
+  <p class="lead">Learning path walks you through this in order and marks "you are here".</p>
+  <svg viewBox="0 -30 1080 330" role="img" aria-label="Learning loop">
+    <defs><marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" class="acc"/></marker></defs>
+    <g>
+      <rect class="abox" x="0" y="60" width="180" height="110" rx="14"/><text class="t" x="20" y="96">1 Learn</text><text class="s" x="20" y="120">Curriculum: rules,</text><text class="s" x="20" y="138">worked example, traps</text><text class="s" x="20" y="156">~45 min</text>
+      <rect class="abox" x="225" y="60" width="180" height="110" rx="14"/><text class="t" x="245" y="96">2 Practise</text><text class="s" x="245" y="120">Practice on those tasks</text><text class="s" x="245" y="138">until "mastered"</text><text class="s" x="245" y="156">~30 min</text>
+      <rect class="abox" x="450" y="60" width="180" height="110" rx="14"/><text class="t" x="470" y="96">3 Build</text><text class="s" x="470" y="120">Milestone: follow the</text><text class="s" x="470" y="138">7-step plan locally</text><text class="s" x="470" y="156">~90 min</text>
+      <rect class="abox" x="675" y="60" width="180" height="110" rx="14"/><text class="t" x="695" y="96">4 Review</text><text class="s" x="695" y="120">Submit files, AI scores</text><text class="s" x="695" y="138">vs rubric, 70+ passes</text><text class="s" x="695" y="156">fix and resubmit</text>
+      <rect class="box" x="900" y="60" width="180" height="110" rx="14" style="stroke:var(--accent);stroke-width:2"/><text class="t" x="920" y="96">5 Prove</text><text class="s" x="920" y="120">Mock exam once every</text><text class="s" x="920" y="138">stop is passed</text><text class="s" x="920" y="156">60 Q · 90 min</text>
+      <path class="ln" d="M180 115H225" marker-end="url(#ar3)"/><path class="ln" d="M405 115H450" marker-end="url(#ar3)"/><path class="ln" d="M630 115H675" marker-end="url(#ar3)"/><path class="ln" d="M855 115H900" marker-end="url(#ar3)"/>
+      <path class="ln" d="M315 170C315 250 90 250 90 175" marker-end="url(#ar3)"/>
+      <text class="s" x="110" y="262">wrong answer → links back to the task and its traps</text>
+      <path class="ln" d="M765 170C765 250 540 250 540 175" marker-end="url(#ar3)"/>
+      <text class="s" x="560" y="262">criterion fix notes → revise, resubmit</text>
+      <path class="ln" d="M990 60C990 0 315 0 315 52" style="stroke-dasharray:6 5" marker-end="url(#ar3)"/>
+      <text class="s" x="652" y="-6" text-anchor="middle">mock ends with "What to learn next" → My mistakes drill</text>
+    </g>
+  </svg>
+  <div class="foot"><span class="brand"><span class="mark">C</span>CCA Academy</span><span>6</span></div>
+</section>
+
+<!-- 7 -->
+<section class="slide" data-notes="<b>Calendar.</b> Six weeks plus an exam-prep week, about 3.5 hours per person per week. Mon brief released, Tue-Wed build and drill, Thu domain-lead clinic, Fri boss battle and leaderboard. Week 0 includes a diagnostic so people see their starting readiness.">
+  <div class="kicker">The 6-week plan</div>
+  <h2>One focus a week, ~3.5 hours</h2>
+  <table>
+    <tr><th>Week</th><th>Focus</th><th>Tasks</th><th>Friday boss battle</th></tr>
+    <tr><td>0</td><td>Kickoff, keys, setup, diagnostic</td><td>all</td><td>Diagnostic</td></tr>
+    <tr><td>1</td><td>Agentic loops, hooks, enforcement</td><td>1.1 1.4 1.5 · 2.1-2.3</td><td>The Refund Incident</td></tr>
+    <tr><td>2</td><td>Multi-agent orchestration, context passing</td><td>1.2 1.3 1.6 · 5.3 5.6</td><td>The Narrow Coordinator</td></tr>
+    <tr><td>3</td><td>Claude Code configuration</td><td>3.1-3.4 · 1.7</td><td>The Missing Teammate</td></tr>
+    <tr><td>4</td><td>Developer productivity, MCP, built-ins</td><td>2.4 2.5 · 5.4</td><td>The Context Cliff</td></tr>
+    <tr><td>5</td><td>CI/CD, prompt engineering, review</td><td>3.5 3.6 · 4.1 4.2 4.6</td><td>The Noisy Reviewer</td></tr>
+    <tr><td>6</td><td>Structured extraction, batch, calibration</td><td>4.3-4.5 · 5.1 5.2 5.5</td><td>The 97% Lie</td></tr>
+    <tr><td>7</td><td>Exam prep: full mock ×2, weak-area sprints</td><td>all</td><td>Final mock</td></tr>
+  </table>
+  <p style="color:var(--muted);margin-top:14px;font-size:15px">Mon brief out · Tue-Wed build + drill · Thu domain-lead clinic · Fri boss battle + leaderboard</p>
+  <div class="foot"><span class="brand"><span class="mark">C</span>CCA Academy</span><span>7</span></div>
+</section>
+
+<!-- 8 -->
+<section class="slide" data-notes="<b>How Practice picks questions.</b> It is weak-first: questions you last got wrong are weighted ten times higher than ones you got right, so misses come back and mastered ones fade. Mastery is strict: a task is mastered only while your LATEST answer to each of its questions is correct. One later miss un-masters it. That is deliberate, it stops people coasting. Keyboard: 1-4 or A-D to answer. 'My mistakes' drills only what you last got wrong, including mistakes from the mock exam.">
+  <div class="kicker">Learn · Practise</div>
+  <h2>Practice is weak-first, so trust it</h2>
+  <p class="lead">You don't choose what to revise. The engine does, from your own answers.</p>
+  <div class="grid g2">
+    <svg viewBox="0 0 520 300" role="img" aria-label="Weak-first selection">
+      <defs><marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="acc"/></marker></defs>
+      <rect class="box" x="0" y="110" width="150" height="70" rx="10"/><text class="t" x="18" y="141">Your answer</text><text class="s" x="18" y="162">to a question</text>
+      <rect class="box" x="230" y="20" width="290" height="96" rx="10" style="stroke:var(--bad)"/><text class="t" x="248" y="50"><tspan class="bad">✗</tspan> Last answer wrong</text><text class="s" x="248" y="74">weight 2.0 → shows up often</text><text class="s" x="248" y="94">listed in "My mistakes"</text>
+      <rect class="box" x="230" y="174" width="290" height="96" rx="10" style="stroke:var(--ok)"/><text class="t" x="248" y="204"><tspan class="ok">✓</tspan> Last answer right</text><text class="s" x="248" y="228">weight 0.2 → fades away</text><text class="s" x="248" y="248">counts toward mastery</text>
+      <path class="ln" d="M150 135L230 70" marker-end="url(#ar4)"/><path class="ln" d="M150 155L230 222" marker-end="url(#ar4)"/>
+    </svg>
+    <div class="card">
+      <h3>Use it well</h3>
+      <ul>
+        <li>Answer with keys <code>1-4</code> or <code>A-D</code>: fast drills</li>
+        <li>Read the reason for <b>every</b> option, not just the right one. That is distractor training.</li>
+        <li>Stuck on a concept? <b>Explain with AI</b> gives a worked example grounded in that task.</li>
+        <li><b>Mastered</b> = your latest answer to each of the task's questions is correct. A later miss un-masters it.</li>
+        <li>Use <b>My mistakes</b> before every mock exam.</li>
+        <li>Generate fresh AI questions once the bank feels familiar.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot"><span class="brand"><span class="mark">C</span>CCA Academy</span><span>8</span></div>
+</section>
+
+<!-- 9 -->
+<section class="slide" data-notes="<b>Mock exam.</b> Exam-shaped: 60 questions in 90 minutes, weighted like the real domains, pass 700/1000. Results only at the end, and Ask AI is switched off. XP is paid once, only for improving on your best score, so re-sitting the same paper to farm XP does nothing. Advice: sit it in week 0 as a baseline, then not again until the path is complete, and aim for 800+ before booking the real exam.">
+  <div class="kicker">Practise · Mock exam</div>
+  <h2>A real dress rehearsal</h2>
+  <p class="lead">60 questions · 90 minutes · pass 700/1000 · no Ask AI · results only at the end.</p>
+  <div class="grid g2">
+    <svg viewBox="0 0 520 260" role="img" aria-label="Mock exam blueprint">
+      <text class="t" x="0" y="18">Questions per domain (mirrors exam weights)</text>
+      <g>
+        <rect class="acc" x="0"   y="40" width="96" height="190" rx="6"/><text x="48" y="140" text-anchor="middle" fill="var(--accent-fg)" font-weight="700" font-size="26">16</text><text class="s" x="48" y="250" text-anchor="middle">D1</text>
+        <rect class="acc" x="104" y="99" width="96" height="131" rx="6" opacity=".65"/><text x="152" y="172" text-anchor="middle" fill="var(--accent-fg)" font-weight="700" font-size="22">11</text><text class="s" x="152" y="250" text-anchor="middle">D2</text>
+        <rect class="acc" x="208" y="88" width="96" height="142" rx="6" opacity=".8"/><text x="256" y="166" text-anchor="middle" fill="var(--accent-fg)" font-weight="700" font-size="22">12</text><text class="s" x="256" y="250" text-anchor="middle">D3</text>
+        <rect class="acc" x="312" y="88" width="96" height="142" rx="6" opacity=".8"/><text x="360" y="166" text-anchor="middle" fill="var(--accent-fg)" font-weight="700" font-size="22">12</text><text class="s" x="360" y="250" text-anchor="middle">D4</text>
+        <rect class="acc" x="416" y="123" width="96" height="107" rx="6" opacity=".5"/><text x="464" y="184" text-anchor="middle" fill="var(--accent-fg)" font-weight="700" font-size="22">9</text><text class="s" x="464" y="250" text-anchor="middle">D5</text>
+      </g>
+    </svg>
+    <div class="card">
+      <h3>When to sit it</h3>
+      <ul>
+        <li><b>Week 0:</b> once, as your baseline</li>
+        <li><b>Week 7:</b> after every Learning path stop is passed</li>
+        <li>Read the <b>"What to learn next"</b> plan it gives you, then drill <b>My mistakes</b></li>
+        <li>XP is paid only for beating your best score, so re-sitting to farm XP does nothing</li>
+        <li>Target <b>800+</b> here before booking the real exam (real pass mark is higher than 700)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot"><span class="brand"><span class="mark">C</span>CCA Academy</span><span>9</span></div>
+</section>
+
+<!-- 10 -->
+<section class="slide" data-notes="<b>Milestones, where real understanding happens.</b> Eight projects covering every task. You build locally, paste or upload your files, and an independent AI reviewer scores you against a weighted rubric. 70 passes. Each one has a 7-step plan with an Ask AI button per step, then an approach guide, then a reference solution. Be clear on the rule: opening the reference solution forfeits that milestone's XP for later submissions. XP you already earned stays. So make one honest attempt first.">
+  <div class="kicker">Build · Milestones</div>
+  <h2>8 projects, reviewed against a rubric</h2>
+  <p class="lead">Build locally → submit files → independent AI review → 70+ passes. The highest-XP part of the app.</p>
+  <div class="grid g2">
+    <table>
+      <tr><th>#</th><th>Project</th><th>XP</th><th>Badge</th></tr>
+      <tr><td>M1</td><td>The Honest Loop</td><td>120</td><td>Loop Master</td></tr>
+      <tr><td>M2</td><td>The Gatekeeper</td><td>150</td><td>Gatekeeper</td></tr>
+      <tr><td>M3</td><td>Errors That Teach</td><td>120</td><td></td></tr>
+      <tr><td>M4</td><td>The Coordinator</td><td>200</td><td>Isolation Expert</td></tr>
+      <tr><td>M5</td><td>Configure the Team Workspace</td><td>150</td><td></td></tr>
+      <tr><td>M6</td><td>The Repo Explorer</td><td>150</td><td></td></tr>
+      <tr><td>M7</td><td>The Trustworthy Reviewer</td><td>180</td><td></td></tr>
+      <tr><td>M8</td><td>The Extraction Pipeline</td><td>220</td><td>Batch Boss</td></tr>
+    </table>
+    <svg viewBox="0 0 480 330" role="img" aria-label="Help ladder">
+      <defs><marker id="ar5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="acc"/></marker></defs>
+      <text class="t" x="0" y="18">When you're stuck, climb in order</text>
+      <rect class="abox" x="0" y="34" width="460" height="52" rx="10"/><text class="t" x="16" y="66">1  7-step plan + Ask AI on each step</text>
+      <rect class="abox" x="0" y="104" width="460" height="52" rx="10"/><text class="t" x="16" y="136">2  Approach guide (how to think about it)</text>
+      <rect class="abox" x="0" y="174" width="460" height="52" rx="10"/><text class="t" x="16" y="206">3  Submit anyway, read each criterion's fix note</text>
+      <rect class="box" x="0" y="244" width="460" height="64" rx="10" style="stroke:var(--warn);stroke-width:2"/><text class="t" x="16" y="272">4  Reference solution</text><text class="s" x="16" y="294">after one honest attempt; later submissions earn no XP</text>
+      <path class="ln" d="M470 60V280" marker-end="url(#ar5)"/>
+    </svg>
+  </div>
+  <div class="foot"><span class="brand"><span class="mark">C</span>CCA Academy</span><span>10</span></div>
+</section>
+
+<!-- 11 -->
+<section class="slide" data-notes="<b>Lab and Scenarios.</b> Shorter build exercises. Prompt/Tool Lab: write a system prompt plus tool definitions as JSON, get rubric feedback per criterion, revise. XP only for improvement. Scenarios are the most exam-like thing in the app for architects and directors: business case, pick model tier, caching, batch vs stream, RAG vs tools. Decisions are scored deterministically, the written rationale by AI, half and half, and you see the monthly cost of your choices.">
+  <div class="kicker">Build · Lab and Scenarios</div>
+  <h2>Short exercises that feel like the exam</h2>
+  <div class="grid g2" style="margin-top:18px">
+    <div class="card">
+      <h3>Prompt/Tool Lab · 3 labs</h3>
+      <ul>
+        <li>Write a system prompt and tool definitions (JSON) for a scenario</li>
+        <li>Scored per rubric criterion, each with a fix note</li>
+        <li>Revise and resubmit. XP is paid only for improvement.</li>
+        <li><b>Best for:</b> D2 tool design and D4 prompt engineering</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Architecture scenarios · business cases</h3>
+      <ul>
+        <li>Decide: model tier, caching, batch vs stream, RAG vs tools</li>
+        <li>Score = <b>50% decisions</b> (graded automatically) + <b>50% rationale</b> (AI-reviewed)</li>
+        <li>Shows the monthly cost of your choices</li>
+        <li><b>Best for:</b> architects and directors, and the trade-off questions</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot"><span class="brand"><span class="mark">C</span>CCA Academy</span><span>11</span></div>
+</section>
+
+<!-- 12 -->
+<section class="slide" data-notes="<b>Agent sandbox. Demo this live if you can, it lands better than any slide.</b> It runs a customer-support agent. Run it once with every guard on and step through the trace. Then switch one guard off. Gate off: the agent refunds before verifying the customer. Hook off: a refund above the limit goes through instead of escalating. Normalise off: the model sees raw unix timestamps. Loop mode wrong: it stops by parsing text instead of stop_reason. Each failure is a real exam trap. Export as Python shows the same loop as SDK code. Works offline with no key.">
+  <div class="kicker">Build · Agent sandbox</div>
+  <h2>Break the agent on purpose</h2>
+  <p class="lead">A support agent with four guards. Switch one off, run, and watch the exam trap happen. Works offline.</p>
+  <svg viewBox="0 0 1080 300" role="img" aria-label="Agent loop with guards">
+    <defs><marker id="ar6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="acc"/></marker></defs>
+    <rect class="box" x="0" y="100" width="150" height="70" rx="10"/><text class="t" x="20" y="132">Customer</text><text class="s" x="20" y="152">"refund my order"</text>
+    <rect class="abox" x="200" y="100" width="170" height="70" rx="10"/><text class="t" x="220" y="132">Model</text><text class="s" x="220" y="152">picks a tool</text>
+    <rect class="box" x="430" y="20" width="260" height="62" rx="10" style="stroke:var(--accent);stroke-width:2"/><text class="t" x="446" y="46">Gate</text><text class="s" x="446" y="66">no refund until customer verified</text>
+    <rect class="box" x="430" y="104" width="260" height="62" rx="10" style="stroke:var(--accent);stroke-width:2"/><text class="t" x="446" y="130">Pre-call hook</text><text class="s" x="446" y="150">refund over limit → escalate to human</text>
+    <rect class="box" x="750" y="104" width="150" height="62" rx="10"/><text class="t" x="766" y="130">Tool runs</text><text class="s" x="766" y="150">verify / lookup / refund</text>
+    <rect class="box" x="430" y="190" width="260" height="62" rx="10" style="stroke:var(--accent);stroke-width:2"/><text class="t" x="446" y="216">Normalise (PostToolUse)</text><text class="s" x="446" y="236">unix time → ISO 8601 before model sees it</text>
+    <rect class="box" x="940" y="20" width="140" height="62" rx="10" style="stroke:var(--accent);stroke-width:2"/><text class="t" x="954" y="46">Loop mode</text><text class="s" x="954" y="66">end on stop_reason</text>
+    <path class="ln" d="M150 135H200" marker-end="url(#ar6)"/>
+    <path class="ln" d="M370 125L430 55" marker-end="url(#ar6)"/>
+    <path class="ln" d="M370 135H430" marker-end="url(#ar6)"/>
+    <path class="ln" d="M690 135H750" marker-end="url(#ar6)"/>
+    <path class="ln" d="M825 166V221H690" marker-end="url(#ar6)"/>
+    <path class="ln" d="M430 221H285V170" marker-end="url(#ar6)"/>
+    <path class="ln2" d="M370 110C600 -10 900 -10 940 45"/>
+    <text class="s" x="0" y="290">Then press <tspan font-weight="700">Export as Python</tspan> to see the exact same loop as real SDK code. Use the step scrubber to replay the trace.</text>
+  </svg>
+  <div class="foot"><span class="brand"><span class="mark">C</span>CCA Academy</span><span>12</span></div>
+</section>
+
+<!-- 13 -->
+<section class="slide" data-notes="<b>Progress.</b> XP: 10 for the first correct answer to a question, 2 for a repeat. Milestones 120 to 220. Mock exam up to 200, paid only on improvement. Readiness is the number that matters, more than XP: it is mastery weighted by each domain's exam share, aim for 80%. Certified-ready means 1200 XP AND 80% readiness, so you cannot get there by grinding easy questions. Squads are ranked by average XP, so helping the weakest member is the best team strategy.">
+  <div class="kicker">Progress · XP, levels, readiness</div>
+  <h2>Readiness is the number that matters</h2>
+  <div class="grid g2" style="margin-top:12px">
+    <svg viewBox="0 0 560 300" role="img" aria-label="Level ladder">
+      <text class="t" x="0" y="18">Levels</text>
+      <rect class="box"  x="0"   y="230" width="104" height="50" rx="8"/><text class="t" x="10" y="254">Apprentice</text><text class="s" x="10" y="272">0 XP</text>
+      <rect class="box"  x="112" y="175" width="104" height="105" rx="8"/><text class="t" x="122" y="199">Builder</text><text class="s" x="122" y="217">300 XP</text>
+      <rect class="box"  x="224" y="120" width="104" height="160" rx="8"/><text class="t" x="232" y="144" style="font-size:13.5px">Orchestrator</text><text class="s" x="232" y="162">700 XP</text>
+      <rect class="abox" x="336" y="65"  width="104" height="215" rx="8"/><text class="t" x="346" y="89">Architect</text><text class="s" x="346" y="107">1200 XP</text>
+      <rect class="acc"  x="448" y="30"  width="112" height="250" rx="8"/><text x="458" y="54" fill="var(--accent-fg)" font-weight="700" font-size="14">Certified-</text><text x="458" y="72" fill="var(--accent-fg)" font-weight="700" font-size="14">Ready</text><text x="458" y="94" fill="var(--accent-fg)" font-size="12">1200 XP +</text><text x="458" y="110" fill="var(--accent-fg)" font-size="12">80% readiness</text>
+    </svg>
+    <div class="card">
+      <h3>How you earn</h3>
+      <table style="font-size:14px">
+        <tr><td>First correct answer to a question</td><td><b>10 XP</b></td></tr>
+        <tr><td>Repeat correct answer</td><td>2 XP</td></tr>
+        <tr><td>Milestone pass (70+)</td><td><b>120-220 XP</b></td></tr>
+        <tr><td>Mock exam (on improvement only)</td><td>up to 200 XP</td></tr>
+      </table>
+      <p style="margin-top:10px"><b>Readiness</b> = your mastery weighted by each domain's exam share. Aim for <b>80%</b>.</p>
+      <p style="margin-top:6px"><b>Badges</b>: First Step, D1-D5 Specialist, Loop Master, Gatekeeper, Isolation Expert, Batch Boss, Builder of All.</p>
+      <p style="margin-top:6px"><b>Squads</b> rank by <b>average</b> XP: lifting your weakest teammate helps most.</p>
+    </div>
+  </div>
+  <div class="foot"><span class="brand"><span class="mark">C</span>CCA Academy</span><span>13</span></div>
+</section>
+
+<!-- 14 -->
+<section class="slide" data-notes="<b>The efficiency slide, spend time here.</b> These are the habits that separate people who pass from people who just collect XP. If people remember one slide, make it this one. Suggest they screenshot it.">
+  <div class="kicker">Use it efficiently</div>
+  <h2>8 habits that get you ready fastest</h2>
+  <div class="grid g4" style="margin-top:12px">
+    <div class="card accent"><h3>1 · Follow the path</h3><p>Learning path → "you are here". Don't tab-hop.</p></div>
+    <div class="card accent"><h3>2 · Weakest first</h3><p>Dashboard lists your weakest tasks. Click one and drill it.</p></div>
+    <div class="card accent"><h3>3 · Read every option</h3><p>Why the wrong options are wrong is the exam skill.</p></div>
+    <div class="card accent"><h3>4 · Wrong → trap</h3><p>Follow the link back to the task's traps before retrying.</p></div>
+    <div class="card"><h3>5 · 15 min daily</h3><p>Short daily drills beat one long weekly cram.</p></div>
+    <div class="card"><h3>6 · Attempt first</h3><p>Plan → guide → fix notes. Reference solution last.</p></div>
+    <div class="card"><h3>7 · Break things</h3><p>Turn sandbox guards off. Watching the failure makes it stick.</p></div>
+    <div class="card"><h3>8 · Mistakes before mock</h3><p>Clear "My mistakes", then sit the mock. Target 800+.</p></div>
+  </div>
+  <div class="foot"><span class="brand"><span class="mark">C</span>CCA Academy</span><span>14</span></div>
+</section>
+
+<!-- 15 -->
+<section class="slide" data-notes="<b>Anti-patterns.</b> Things we expect people to try. XP is improvement-only on purpose, so most farming does nothing. The leaderboard is a motivator, not the goal: readiness is.">
+  <div class="kicker">Avoid</div>
+  <h2>What doesn't work (and why)</h2>
+  <table style="margin-top:12px">
+    <tr><th>Tempting</th><th>What actually happens</th><th>Do instead</th></tr>
+    <tr><td class="bad">Re-sitting the mock to farm XP</td><td>XP only for beating your best</td><td>Drill My mistakes, then re-sit</td></tr>
+    <tr><td class="bad">Opening the reference solution first</td><td>That milestone earns no more XP; you learn less</td><td>One honest attempt, then compare</td></tr>
+    <tr><td class="bad">Clicking past explanations</td><td>Mastery breaks on the next miss</td><td>Read why each option is wrong</td></tr>
+    <tr><td class="bad">Chasing XP over readiness</td><td>Certified-ready needs 80% readiness too</td><td>Watch the readiness gauge</td></tr>
+    <tr><td class="bad">Pasting real exam questions</td><td>Breaks exam rules; content must be original</td><td>Write your own or generate with AI</td></tr>
+    <tr><td class="bad">Sharing an API key</td><td>Personal keys are per person</td><td>Everyone uses their own</td></tr>
+  </table>
+  <div class="foot"><span class="brand"><span class="mark">C</span>CCA Academy</span><span>15</span></div>
+</section>
+
+<!-- 16 -->
+<section class="slide" data-notes="<b>For the engineers in the room.</b> React + Vite frontend, FastAPI backend, SQLite progress store. Content is plain YAML, so anyone can add a question via PR. The LLM layer supports DIAL, OpenAI-compatible, Anthropic and a mock for tests. The key comes in a request header per call and is never stored. 77 offline tests. There are Claude Code agents and skills in claude-config for authoring questions and reviewing milestones.">
+  <div class="kicker">Under the hood</div>
+  <h2>How it works</h2>
+  <svg viewBox="0 0 1080 330" role="img" aria-label="Architecture">
+    <defs><marker id="ar7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="acc"/></marker></defs>
+    <rect class="abox" x="0" y="40" width="250" height="150" rx="12"/><text class="t" x="20" y="72">Browser · React + Vite</text>
+    <text class="s" x="20" y="98">12 tabs + Ask AI</text><text class="s" x="20" y="118">name/squad/track: localStorage</text><text class="s" x="20" y="138">API key: sessionStorage only</text><text class="s" x="20" y="158">dark / light theme</text>
+    <rect class="abox" x="370" y="40" width="300" height="150" rx="12"/><text class="t" x="390" y="72">FastAPI backend · /api</text>
+    <text class="s" x="390" y="98">quiz · exam · milestones · labs · scenarios</text><text class="s" x="390" y="118">tutor · ask · generate · review · playground</text><text class="s" x="390" y="138">XP, levels, badges, readiness</text><text class="s" x="390" y="158">serves the built frontend at /</text>
+    <rect class="box" x="790" y="10" width="290" height="80" rx="12"/><text class="t" x="810" y="42">LLM provider layer</text><text class="s" x="810" y="66">DIAL · OpenAI-compatible · Anthropic · mock</text>
+    <rect class="box" x="790" y="130" width="290" height="70" rx="12"/><text class="t" x="810" y="160">SQLite: cca.db</text><text class="s" x="810" y="182">answers, attempts, XP ledger</text>
+    <rect class="box" x="370" y="240" width="300" height="70" rx="12"/><text class="t" x="390" y="270">content/*.yaml</text><text class="s" x="390" y="292">curriculum · questions · milestones · labs · scenarios</text>
+    <rect class="box" x="790" y="240" width="290" height="70" rx="12"/><text class="t" x="810" y="270">claude-config/</text><text class="s" x="810" y="292">4 agents · 4 skills for authors</text>
+    <path class="ln" d="M250 115H370" marker-end="url(#ar7)"/><text class="s" x="262" y="105">key in header</text><text class="s" x="262" y="136">per request</text>
+    <path class="ln" d="M670 90L790 55" marker-end="url(#ar7)"/>
+    <path class="ln" d="M670 140L790 162" marker-end="url(#ar7)"/>
+    <path class="ln" d="M520 240V190" marker-end="url(#ar7)"/>
+    <path class="ln2" d="M790 275H670"/>
+  </svg>
+  <div class="foot"><span class="brand"><span class="mark">C</span>CCA Academy</span><span>16</span></div>
+</section>
+
+<!-- 17 -->
+<section class="slide" data-notes="<b>FAQ.</b> Keep this up during Q&amp;A. More answers are in the speaker notes of the next slide.">
+  <div class="kicker">Questions you'll get</div>
+  <h2>FAQ</h2>
+  <div class="qa" style="margin-top:10px">
+    <div><b>Do I need an API key?</b>Only for Tutor, Ask AI, AI question generation and reviews. Curriculum, Practice, Mock exam, Progress and the sandbox demo work without one.</div>
+    <div><b>Is my key safe?</b>It stays in this browser tab's session, travels per request and is never stored or logged by the server. Closing the tab clears it.</div>
+    <div><b>Where's my progress saved?</b>On the server, keyed by your name. Use the exact same name on every device.</div>
+    <div><b>Can I change track later?</b>Yes, in Settings. Your history stays; only the question levels you see change.</div>
+    <div><b>Are these the real exam questions?</b>No. All 150 are original and written to train the same reasoning. Never add real exam items.</div>
+    <div><b>Why did a task lose "mastered"?</b>Mastery means your latest answer to each question is correct. One new miss un-masters it, by design.</div>
+    <div><b>Why no XP for my resubmission?</b>XP pays only for beating your best score, and not after you've opened the reference solution.</div>
+    <div><b>App pass mark is 700. Is that the real one?</b>The plan targets 720 for the real exam. Aim for 800+ in the mock.</div>
+    <div><b>DIAL "Test connection" fails?</b>Connect to EPAM VPN and check the model name via <code>/openai/models</code>.</div>
+    <div><b>Can I add questions?</b>Yes, via PR to <code>content/questions.yaml</code>: 4 options, one correct letter, a reason for each option.</div>
+  </div>
+  <div class="foot"><span class="brand"><span class="mark">C</span>CCA Academy</span><span>17</span></div>
+</section>
+
+<!-- 18 -->
+<section class="slide" data-notes="<b>Close.</b> Give one concrete action for today: sign in, set a squad, do the Curriculum basics card and 10 practice questions. That gives everyone a readiness number before Friday. Remind them where help is: Thursday domain-lead clinics and the floating Ask AI. Extra Q&amp;A material: 'Can I use it offline?' Yes, without AI features. 'Can I reset progress?' Not from the UI; ask the programme owner. 'Does SSO exist?' Not yet, names are self-declared for now; SSO is on the backlog. 'Is the leaderboard fair?' XP is improvement-only and squads rank by average, so it rewards learning and helping.">
+  <div style="margin:auto 0">
+    <div class="kicker">Today</div>
+    <h1>Your first 30 minutes</h1>
+    <div class="grid g4" style="margin:24px 0;flex:none">
+      <div class="card accent"><h3>1</h3><p>Settings: name, squad, track, own key, Test connection</p></div>
+      <div class="card accent"><h3>2</h3><p>Curriculum → "The basics" card</p></div>
+      <div class="card accent"><h3>3</h3><p>Practice: 10 questions, read every reason</p></div>
+      <div class="card accent"><h3>4</h3><p>Dashboard: note your readiness and weakest task</p></div>
+    </div>
+    <p class="lead">Help: Thursday domain-lead clinic · Ask AI on every page · "How this tab works" on every tab.</p>
+  </div>
+  <div class="foot"><span class="brand"><span class="mark">C</span>CCA Academy</span><span>Questions?</span></div>
+</section>
+
+</div>
+<div class="notes" id="notes"></div>
+<script>
+const slides=[...document.querySelectorAll('.slide')], notes=document.getElementById('notes'), pos=document.getElementById('pos');
+let i=Math.max(0,Math.min(slides.length-1,(parseInt(location.hash.slice(1))||1)-1));
+function show(n){i=Math.max(0,Math.min(slides.length-1,n));slides.forEach((s,k)=>s.classList.toggle('on',k===i));
+  notes.innerHTML=slides[i].dataset.notes||'';pos.textContent=(i+1)+' / '+slides.length;history.replaceState(null,'','#'+(i+1));}
+document.addEventListener('keydown',e=>{
+  if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();show(i+1)}
+  else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();show(i-1)}
+  else if(e.key==='Home')show(0); else if(e.key==='End')show(slides.length-1);
+  else if(e.key==='n'||e.key==='N')document.body.classList.toggle('shownotes');
+  else if(e.key==='t'||e.key==='T'){const r=document.documentElement;r.dataset.theme=r.dataset.theme==='dark'?'light':'dark'}
+  else if(e.key==='f'||e.key==='F')document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();
+  else if(e.key==='p'||e.key==='P')window.print();
+});
+document.addEventListener('click',e=>{if(e.target.closest('.notes,a'))return;show(e.clientX>innerWidth/2?i+1:i-1)});
+function fit(){const d=document.querySelector('.deck').getBoundingClientRect();
+  document.documentElement.style.setProperty('--k',Math.min((d.width-24)/1280,(d.height-28)/720));}
+addEventListener('resize',fit);
+new MutationObserver(fit).observe(document.body,{attributes:true,attributeFilter:['class']});
+show(i);fit();
+</script>
+</body>
+</html>

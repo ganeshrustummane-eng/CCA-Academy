@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>CCA Academy Architecture</title>
+<style>
+:root{color-scheme:light}
+body{font-family:Segoe UI,Arial,sans-serif;margin:0;padding:24px;background:#fff;color:#1f2937}
+h1{font-size:20px;margin:0 0 4px}p.sub{margin:0 0 16px;color:#6b7280;font-size:13px}
+svg{width:100%;height:auto;max-width:1100px}
+text{font-size:12px;fill:#1f2937}
+.t{font-weight:600;font-size:13px}
+.box{stroke-width:1.2}
+.u{fill:#eff6ff;stroke:#3b82f6}.c{fill:#f0fdf4;stroke:#22c55e}.g{fill:#fefce8;stroke:#eab308}.o{fill:#faf5ff;stroke:#a855f7}.x{fill:#f3f4f6;stroke:#9ca3af;stroke-dasharray:5 3}
+.ar{stroke:#6b7280;stroke-width:1.3;fill:none;marker-end:url(#a)}
+.lg{font-size:11px;fill:#6b7280}
+</style></head><body>
+<h1>CCA Academy: Architecture</h1>
+<p class="sub">Repo-based, CI-verified gamification for the Claude Certified Architect (Foundations) programme.</p>
+<svg viewBox="0 0 1100 640" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6b7280"/></marker></defs>
+
+<!-- Participants -->
+<rect class="box u" x="20" y="20" width="200" height="90" rx="8"/>
+<text class="t" x="34" y="42">Participants (15-50)</text>
+<text x="34" y="62">Squads of 4-5, mixed level</text>
+<text x="34" y="80">Domain leads (5) · Captains</text>
+<text x="34" y="98">Owner: Ganesh</text>
+
+<!-- Learning content -->
+<rect class="box c" x="270" y="20" width="250" height="150" rx="8"/>
+<text class="t" x="284" y="42">Learning content (our repo)</text>
+<text x="284" y="62">curriculum/  weekly D1-D5 briefs</text>
+<text x="284" y="80">question-bank/  YAML, rationale per option</text>
+<text x="284" y="98">break-it/  anti-pattern challenges</text>
+<text x="284" y="116">boss-battles/  6 scenario exams</text>
+<text x="284" y="134">labs/  autograder checks only</text>
+<text x="284" y="152">Mock exams x2 (week 7)</text>
+
+<!-- Upstream labs -->
+<rect class="box x" x="570" y="20" width="230" height="110" rx="8"/>
+<text class="t" x="584" y="42">Upstream labs (linked, unmodified)</text>
+<text x="584" y="62">aderegil/claude-certified-architect</text>
+<text x="584" y="80">Labs 01-06 · pinned commit SHA</text>
+<text x="584" y="98">CC BY-NC-ND: no forks/edits</text>
+
+<!-- Anthropic -->
+<rect class="box x" x="850" y="20" width="230" height="110" rx="8"/>
+<text class="t" x="864" y="42">Anthropic platform</text>
+<text x="864" y="62">Console workspace · per-user keys</text>
+<text x="864" y="80">Messages / Batch API · Agent SDK</text>
+<text x="864" y="98">Claude Code (labs 02, 05)</text>
+
+<!-- Local dev -->
+<rect class="box u" x="20" y="230" width="500" height="120" rx="8"/>
+<text class="t" x="34" y="252">Participant workstation</text>
+<text x="34" y="274">cca CLI:  cca quiz · cca status · cca submit</text>
+<text x="34" y="292">Lab workspace: upstream lab clone + .env (key, never committed)</text>
+<text x="34" y="310">Break-It challenge runner</text>
+<text x="34" y="328">Pre-commit secret scan</text>
+
+<!-- GitHub -->
+<rect class="box g" x="600" y="230" width="480" height="120" rx="8"/>
+<text class="t" x="614" y="252">GitHub (private org repo)</text>
+<text x="614" y="274">Progress PRs/commits → results/&lt;user&gt;.json</text>
+<text x="614" y="292">Answer keys: protected branch / hashed</text>
+<text x="614" y="310">PR review: domain leads approve question-bank changes</text>
+<text x="614" y="328">Issues: help requests · peer-help XP</text>
+
+<!-- Actions -->
+<rect class="box o" x="20" y="430" width="1060" height="110" rx="8"/>
+<text class="t" x="34" y="452">GitHub Actions (engine)</text>
+<rect class="box o" x="40" y="466" width="230" height="56" rx="6" fill="#fff"/>
+<text x="52" y="488">grade.yml</text><text x="52" y="506" class="lg">verify quiz + autograder evidence</text>
+<rect class="box o" x="300" y="466" width="230" height="56" rx="6" fill="#fff"/>
+<text x="312" y="488">xp-engine</text><text x="312" y="506" class="lg">XP · levels · badges · streaks</text>
+<rect class="box o" x="560" y="466" width="230" height="56" rx="6" fill="#fff"/>
+<text x="572" y="488">leaderboard.yml</text><text x="572" y="506" class="lg">LEADERBOARD.md individual + squad</text>
+<rect class="box o" x="820" y="466" width="240" height="56" rx="6" fill="#fff"/>
+<text x="832" y="488">weekly-digest.yml</text><text x="832" y="506" class="lg">Slack webhook · weak-domain report</text>
+
+<!-- Outputs -->
+<rect class="box c" x="20" y="580" width="520" height="46" rx="8"/>
+<text x="34" y="608">Outputs: LEADERBOARD.md · badges · domain heatmap · Certified-Ready list</text>
+<rect class="box x" x="580" y="580" width="500" height="46" rx="8"/>
+<text x="594" y="608">Slack channel #cca-academy (digest only, optional)</text>
+
+<!-- Arrows -->
+<path class="ar" d="M120 110 L120 230"/><text class="lg" x="126" y="175">study, drill</text>
+<path class="ar" d="M270 95 L220 95 L220 100"/>
+<path class="ar" d="M395 170 L395 230 L350 230"/><text class="lg" x="400" y="205">pulled by CLI</text>
+<path class="ar" d="M685 130 L685 180 L300 180 L300 230"/><text class="lg" x="480" y="176">clone labs</text>
+<path class="ar" d="M520 300 L600 300"/><text class="lg" x="528" y="292">push</text>
+<path class="ar" d="M965 130 L965 215 L400 215 L400 230" stroke-dasharray="4 3"/><text class="lg" x="800" y="210">API calls from labs</text>
+<path class="ar" d="M840 350 L840 430"/><text class="lg" x="850" y="395">trigger</text>
+<path class="ar" d="M280 540 L280 580"/>
+<path class="ar" d="M940 540 L940 580"/>
+</svg>
+
+<h2 style="font-size:15px;margin-top:20px">Data flow</h2>
+<ol style="font-size:13px;line-height:1.6;max-width:900px">
+<li>Participant studies the weekly brief, builds the upstream lab locally (their own API key), and runs <code>cca quiz</code>.</li>
+<li>CLI writes a results file and pushes a PR to the private repo.</li>
+<li><code>grade.yml</code> verifies quiz answers against protected keys and runs autograder checks on lab artefacts.</li>
+<li><code>xp-engine</code> awards XP, levels, badges and squad streaks; <code>leaderboard.yml</code> regenerates <code>LEADERBOARD.md</code>.</li>
+<li>Friday digest posts team standings and weakest domains to Slack.</li>
+</ol>
+</body></html>
